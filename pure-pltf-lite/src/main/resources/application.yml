@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: @project.artifactId@
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: @project.version@
+    encoding: @project.build.sourceEncoding@
+  java:
+    version: @java.version@

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: @project.artifactId@
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: @project.version@
+    encoding: @project.build.sourceEncoding@
+  java:
+    version: @java.version@

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Because the standard log4j2.xml configuration file is loaded too early, you cannot use extensions in it.
+    You need to either use log4j2-spring.xml or define a logging.config property.
+-->
+
+<!-- 日志级别从小到大 ALL < TRACE < DEBUG < INFO < WARN < ERROR < FATAL < OFF -->
+
+<Configuration status="WARN"> <!-- 默认输出 warn 及以上 -->
+    <properties>
+        <Property name="log_path" value="./logs" />
+        <!-- springboot lookup ${spring:spring.application.name} -->
+        <Property name="applicationName" value="${spring:spring.application.name}" />
+        <Property name="file_suffix" value="log" />
+        <Property name="full_name" value="${log_path}/${applicationName}.${file_suffix}" />
+    </properties>
+
+    <!-- 定义日志 appender -->
+    <appenders>
+        <!-- 控制台 -->
+        <console name="Console" target="SYSTEM_OUT">
+            <!-- 日志输出格式 -->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} --> %msg%n"/>
+        </console>
+
+        <!-- all 及以上 -->
+        <RollingFile name="AllAppender"
+                     fileName="${full_name}"
+                     filePattern="${log_path}/$${date:yyyy-MM}/all-%d{yyyy-MM-dd}-%i.log.gz">
+            <!-- 日志格式 -->
+            <PatternLayout>
+                <pattern>%d %p %C{} [%t] %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <!-- 日志文件切分参数 -->
+                <!-- 日志基础文件大小，超过就触发日志文件滚动更新 -->
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <!-- 日志文件滚动更新间隔时间 -->
+                <TimeBasedTriggeringPolicy interval="1" />
+            </Policies>
+            <!-- 日志文件个数上限，默认为 7，超过大小后会被压缩：依据 filePattern 中的 %i -->
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
+    </appenders>
+
+    <loggers> <!-- 定义 logger 并引入，appender 才会生效 -->
+        <root level="debug"> <!-- 指定项目的根日志，如果子 appenderRef 没有单独指定 logger，会使用 root 作为默认的日志输出 -->
+            <appenderRef ref="AllAppender" /> <!-- 默认输出 debug 及以上 -->
+            <appenderRef ref="Console" level="info" /> <!-- 控制台输出 info 日志 -->
+        </root>
+    </loggers>
+</Configuration>
