@@ -111,3 +111,27 @@ spring.config.failOnMissingProperties=false
 // 如果配置文件中不存在该 key 返回 null，不会报错
 String actuatorPort = ac.getEnvironment().getProperty("management.server.port");
 ```
+
+## 踩坑
+### 项目打包
+项目使用 maven 打包后使用 java -jar 运行时提示没有主清单属性，检查发现 spring-boot-maven-plugin 已经添加。因为 Main-Class 属性未被正确处理并写入 MANIFEST.MF 文件中，需要执行 repackage，项目才能正常启动。
+```xml
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+    <executions>
+        <execution>
+            <goals>
+                <goal>repackage</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+<br>
+
+打包成功后项目启动无问题，但是访问 pure-pltf-core 中定义的 controller 不生效。跟 idea 中开发时的行为不一致 =_=
+
+
+在 idea 中启动 PureLiteMain 是可以访问到 pure-pltf-core 中定义的 controller 的。 

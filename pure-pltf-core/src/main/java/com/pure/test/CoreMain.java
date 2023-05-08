@@ -1,4 +1,4 @@
-package com.pure;
+package com.pure.test;
 
 import com.pure.entity.info.BaseInfo;
 import com.pure.entity.vo.BaseInfoVo;
@@ -9,17 +9,17 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 
 /**
- * com.pure.Main
+ * com.pure.test.Main
  *
  * @author gnl
  * @since 2023/5/7
  */
-public class Main {
-    public static void main(String[] args) {
-        // test();
-        // testSpi();
-        testEnv();
-    }
+public class CoreMain {
+//    public static void main(String[] args) {
+//        // test();
+//        // testSpi();
+//        // testEnv();
+//    }
 
     public static void testEnv() {
         Properties properties = new Properties();

@@ -3,9 +3,12 @@ package com.pure;
 import com.pure.comp.ActuatorInfo;
 import com.pure.entity.info.BaseInfo;
 import com.pure.service.impl.InfoServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.CompositeHealth;
+import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthComponent;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -20,6 +23,7 @@ import java.util.Map;
  * @since 2023/5/7
  */
 
+@Slf4j
 @SpringBootTest
 public class PureLiteMainTest {
 
@@ -65,12 +69,21 @@ public class PureLiteMainTest {
 
     @Test
     public void test4() {
-        System.out.println(actuatorInfo);
 
-        HealthComponent health = actuatorInfo.getHealthEndpoint().health();
+        CompositeHealth health = (CompositeHealth) actuatorInfo.getHealthEndpoint().health();
 
-        System.out.println(actuatorInfo.getHealthEndpoint().health().getStatus());
-        System.out.println(actuatorInfo.getHealthEndpoint().health());
+        Map<String, HealthComponent> components = health.getComponents();
+        Health diskSpace = (Health) components.get("diskSpace");
+        System.out.println(diskSpace);
+        Map<String, Object> details = diskSpace.getDetails();
+        components.forEach((k, val) -> {
+            log.info("key => {}, value => {}", k, val);
+        });
+
+        System.out.println(health.getStatus());
+
+//        System.out.println(actuatorInfo.getHealthEndpoint().health().getStatus());
+//        System.out.println(actuatorInfo.getHealthEndpoint().health());
 
         System.out.println(actuatorInfo.getInfoEndpoint().info());
     }

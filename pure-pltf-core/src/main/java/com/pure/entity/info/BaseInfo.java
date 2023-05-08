@@ -25,9 +25,6 @@ public class BaseInfo implements Serializable {
     private String appName;
     private String appVersion;
 
-    private String serverPort;
-    private String status; // UP or DOWN
-
     private String appEncoding;
     private Map<String, Object> ext;
 }

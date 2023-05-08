@@ -1,5 +1,6 @@
 package com.pure.service.impl;
 
+import com.pure.comp.ActuatorInfo;
 import com.pure.entity.info.BaseInfo;
 import com.pure.entity.info.SysInfo;
 import com.pure.service.InfoService;
@@ -7,10 +8,15 @@ import com.pure.spi.InfoHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.CompositeHealth;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthComponent;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.ServiceLoader;
 
 /**
@@ -23,6 +29,20 @@ import java.util.ServiceLoader;
 @Slf4j
 public class InfoServiceImpl implements InfoService {
 
+    // env properties key
+    private static final String JAVA_RUNTIME_VERSION = "java.runtime.version";
+    private static final String OS_NAME = "os.name";
+    private static final String OS_ARCH = "os.arch";
+    private static final String OS_VERSION = "os.version";
+    private static final String USER_COUNTRY = "user.country";
+    private static final String USER_LANGUAGE = "user.language";
+    private static final String USER_TIMEZONE = "user.timezone";
+
+    // actuator key
+    private static final String DISK_SPACE = "diskSpace";
+    private static final String DISK_SPACE_TOTAL = "total";
+    private static final String DISK_SPACE_FREE = "free";
+
     @Autowired
     private ConfigurableApplicationContext ac;
 
@@ -32,11 +52,11 @@ public class InfoServiceImpl implements InfoService {
     @Value("${info.app.version}")
     private String appVersion;
 
-    @Value("${info.java.version}")
-    private String javaVersion;
-
     @Value("${info.app.encoding}")
     private String appEncoding;
+
+    @Autowired
+    private ActuatorInfo actuatorInfo;
 
     @Override
     public BaseInfo getBaseInfo() {
@@ -55,14 +75,14 @@ public class InfoServiceImpl implements InfoService {
     @Override
     public SysInfo getSysInfo() {
         Map<String, Object> systemProperties = ac.getEnvironment().getSystemProperties();
-        String javaRuntimeVersion = (String) systemProperties.get("java.runtime.version");
-        String osName = (String) systemProperties.get("os.name");
-        String osArch = (String) systemProperties.get("os.arch");
-        String osVersion = (String) systemProperties.get("os.version");
+        String javaRuntimeVersion = (String) systemProperties.get(JAVA_RUNTIME_VERSION);
+        String osName = (String) systemProperties.get(OS_NAME);
+        String osArch = (String) systemProperties.get(OS_ARCH);
+        String osVersion = (String) systemProperties.get(OS_VERSION);
 
-        String country = (String) systemProperties.get("user.country");
-        String language = (String) systemProperties.get("user.language");
-        String timezone = (String) systemProperties.get("user.timezone");
+        String country = (String) systemProperties.get(USER_COUNTRY);
+        String language = (String) systemProperties.get(USER_LANGUAGE);
+        String timezone = (String) systemProperties.get(USER_TIMEZONE);
 
         SysInfo sysInfo = SysInfo.builder()
                 .javaRuntimeVersion(javaRuntimeVersion)
@@ -74,7 +94,28 @@ public class InfoServiceImpl implements InfoService {
                 .timezone(timezone)
                 .build();
 
+        getInfoFromActuator(sysInfo);
+
         return sysInfo;
+    }
+
+    private void getInfoFromActuator(SysInfo sysInfo) {
+        CompositeHealth health = (CompositeHealth) actuatorInfo.getHealthEndpoint().health();
+        String serverStatus = health.getStatus().getCode();
+
+        sysInfo.setStatus(serverStatus);
+
+        Map<String, HealthComponent> components = health.getComponents();
+        Health diskSpaceHealth = (Health) components.get(DISK_SPACE);
+        if (Objects.nonNull(diskSpaceHealth)) {
+            Map<String, Object> diskDetails = diskSpaceHealth.getDetails();
+            String diskTotal = String.valueOf(diskDetails.get(DISK_SPACE_TOTAL));
+            String diskFree = String.valueOf(diskDetails.get(DISK_SPACE_FREE));
+
+            sysInfo.setDiskStatus(diskSpaceHealth.getStatus().getCode());
+            sysInfo.setDiskSpaceTotal(diskTotal);
+            sysInfo.setDiskSpaceFree(diskFree);
+        }
     }
 
     private void getInfoFromSpi() {
