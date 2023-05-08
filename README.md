@@ -131,7 +131,73 @@ String actuatorPort = ac.getEnvironment().getProperty("management.server.port");
 
 <br>
 
-打包成功后项目启动无问题，但是访问 pure-pltf-core 中定义的 controller 不生效。跟 idea 中开发时的行为不一致 =_=
+打包成功后项目启动无问题，但是访问 pure-pltf-core 中定义的 controller 不生效。跟在 idea 中开发时的行为不一致 =_=
 
+目前的项目结构如下
+```
+pure-pltf
+├── pure-pltf-core
+├── pure-pltf-lite
+```
 
-在 idea 中启动 PureLiteMain 是可以访问到 pure-pltf-core 中定义的 controller 的。 
+其中 pure-pltf 用作版本锁定
+```xml
+<!-- pure-pltf pom.xml -->
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>2.7.11</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+pure-pltf-core 继承自 pure-pltf
+
+```xml
+<!-- pure-pltf-core pom.xml -->
+<parent>
+    <groupId>com.pure</groupId>
+    <artifactId>pure-pltf</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</parent>
+```
+
+pure-pltf-lite 继承自 pure-pltf，并依赖 pure-pltf-core
+```xml
+<!-- pure-pltf-lite pom.xml -->
+<parent>
+    <groupId>com.pure</groupId>
+    <artifactId>pure-pltf</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</parent>
+
+<dependencies>
+    <dependency>
+        <groupId>com.pure</groupId>
+        <artifactId>pure-pltf-core</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+```
+
+随后改用 spring-boot-starter-parent，项目结构不变
+```
+pure-pltf
+├── pure-pltf-core
+├── pure-pltf-lite
+```
+
+pure-pltf-core 和 pure-pltf-lite 不再依赖 pure-pltf，直接依赖 spring-boot-starter-parent：
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.7.11</version>
+</parent>
+```
