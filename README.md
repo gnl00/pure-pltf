@@ -1,13 +1,13 @@
 # pure-pltf
 
 ## 介绍
-一个 Paas 平台
+一个 PaaS 平台
 
 <br>
 
 适用场景：
 * 电商之类以微服务为主的分布式系统不适用，因为微服务扩展起来也方便，需要什么功能直接前端加页面，后端加服务即可；
-* Paas 平台则不一样，可以在 core 的基础上，根据需求方的要求，进行定制化开发。（NM 又回到定制化）。
+* PaaS 平台则不一样，可以在 core 的基础上，根据需求方的要求，进行定制化开发。（NM 又回到定制化）。
 
 <br>
 
@@ -114,7 +114,21 @@ String actuatorPort = ac.getEnvironment().getProperty("management.server.port");
 
 ## 踩坑
 ### 项目打包
-项目使用 maven 打包后使用 java -jar 运行时提示没有主清单属性，检查发现 spring-boot-maven-plugin 已经添加。因为 Main-Class 属性未被正确处理并写入 MANIFEST.MF 文件中，需要执行 repackage，项目才能正常启动。
+项目使用 maven 打包后使用 java -jar 运行时提示没有主清单属性，检查发现 spring-boot-maven-plugin 已经添加。SpringBoot 官方文档中 [Create an Executable JAR with Maven](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#howto.build.create-an-executable-jar-with-maven) 有提到：
+如果项目继承了 spring-boot-starter-parent，可以直接添加 spring-boot-maven-plugin 并使用
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+    </plugins>
+</build>
+```
+
+如果未使用 spring-boot-starter-parent 仍然可以使用这个插件，但是需要额外添加一个 `<executions>` 标签。 
+
 ```xml
 <plugin>
     <groupId>org.springframework.boot</groupId>
@@ -128,6 +142,8 @@ String actuatorPort = ac.getEnvironment().getProperty("management.server.port");
     </executions>
 </plugin>
 ```
+
+项目现在没有继承自 spring-boot-starter-parent，所以采用第二个方法。
 
 <br>
 
@@ -201,3 +217,5 @@ pure-pltf-core 和 pure-pltf-lite 不再依赖 pure-pltf，直接依赖 spring-b
     <version>2.7.11</version>
 </parent>
 ```
+
+*注意：打包运行的时候要先将 pure-pltf-core 安装到 maven 仓库，再打包 pure-pltf-lite*
