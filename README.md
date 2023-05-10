@@ -224,6 +224,7 @@ pure-pltf-core 和 pure-pltf-lite 不再依赖 pure-pltf，直接依赖 spring-b
 <br>
 
 ### SPI 实现动态加载
+> 详情参见 [boot-pkg](https://github.com/gnl00/boot-pkg)
 
 #### ServiceLoader 加载外部 jar
 
