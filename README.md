@@ -249,7 +249,7 @@ public void doServiceLoad() {
 }
 ```
 
-### Java -cp 和 -jar 命令
+#### Java -cp 和 -jar 命令
 
 假如存在一个 SpringBoot 应用 application.jar，以下两条命令运行效果相同
 ```shell
@@ -287,3 +287,15 @@ Main-Class 的一行，指明了含有 `public static void main(String[] args)` 
 如果需要加载多个 JAR 文件，可以使用 `:` 来作为分隔符（Linux/Unix），Windows 使用 `;`
 
 可以使用 `*` 来加载某路径下所有 JAR 文件 `java -cp "./lib/*" <main-class>`
+
+<br>
+
+#### 两种方式对比
+
+使用 ServiceLoader 来加载更加灵活，不需要先将 JAR 文件放入 classpath 中，只需要自定义好 ClassLoader，用来动态加载外部 JAR 即可。
+
+
+`java -cp` 方式需要在项目启动时指定 classpath，后续如果引入外部 JAR 需要先将外部 JAR 文件保存到 classpath，然后再刷新 classpath 才能使用新引入的文件。
+
+
+本项目使用第一种方法。
