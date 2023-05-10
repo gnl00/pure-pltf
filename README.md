@@ -219,3 +219,71 @@ pure-pltf-core 和 pure-pltf-lite 不再依赖 pure-pltf，直接依赖 spring-b
 ```
 
 *注意：打包运行的时候要先将 pure-pltf-core 安装到 maven 仓库，再打包 pure-pltf-lite*
+
+
+<br>
+
+### SPI 实现动态加载
+
+#### ServiceLoader 加载外部 jar
+
+需要设置当前线程的上下文类加载器，加载完成后将上下文类加载器设置回原来的值，以避免影响其他模块的加载
+
+```java
+public void load(ClassLoader cl) {
+    Assert.notNull(cl, "spi classloader must not be null");
+
+    // 设置当前线程的上下文类加载器
+    Thread.currentThread().setContextClassLoader(cl);
+    doServiceLoad();
+
+    // 加载完成后将上下文类加载器设置回原来的值，以避免影响其他模块的加载
+    Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+}
+
+public void doServiceLoad() {
+    ServiceLoader<BootSpi> services = ServiceLoader.load(BootSpi.class);
+    for (BootSpi service : services) {
+        service.load();
+    }
+}
+```
+
+### Java -cp 和 -jar 命令
+
+假如存在一个 SpringBoot 应用 application.jar，以下两条命令运行效果相同
+```shell
+java -jar application.jar
+java -cp application.jar org.springframework.boot.loader.JarLauncher
+```
+
+<br>
+
+`java -jar` 执行一个封装好了的 jar 包。其中有一个 MANIFEST.MF 文件
+```manifest
+Manifest-Version: 1.0
+Created-By: Maven JAR Plugin 3.3.0
+Build-Jdk-Spec: 17
+Implementation-Title: boot-pkg-lite
+Implementation-Version: 1.0-SNAPSHOT
+Main-Class: org.springframework.boot.loader.JarLauncher
+Start-Class: com.demo.lite.LiteMain
+Spring-Boot-Version: 3.0.6
+Spring-Boot-Classes: BOOT-INF/classes/
+Spring-Boot-Lib: BOOT-INF/lib/
+Spring-Boot-Classpath-Index: BOOT-INF/classpath.idx
+Spring-Boot-Layers-Index: BOOT-INF/layers.idx
+```
+
+Main-Class 的一行，指明了含有 `public static void main(String[] args)` 方法的类，作为应用程序的主启动类。
+使用 -jar 时，运行的 JAR 文件的 classpath 是系统环境变量中的 CLASSPATH，其他的类路径设置将被忽略。
+如果使用 `java -cp <your_classpath> -jar application.jar` 来运行程序的话，其中 `-cp` 部分指定的参数是无效的。
+
+<br>
+
+`java -cp or -classpath or --class-path <your_classpath>` 效果相同。指定 classpath 会覆盖 CLASSPATH 环境变量。
+如果没有使用类路径选项，也没有设置 classpath，那么用户的类路径由当前目录（.）组成。
+
+如果需要加载多个 JAR 文件，可以使用 `:` 来作为分隔符（Linux/Unix），Windows 使用 `;`
+
+可以使用 `*` 来加载某路径下所有 JAR 文件 `java -cp "./lib/*" <main-class>`
