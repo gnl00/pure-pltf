@@ -1,12 +1,11 @@
 package com.pure;
 
-import com.pure.comp.ActuatorInfo;
+import com.pure.component.ActuatorInfo;
 import com.pure.entity.info.BaseInfo;
 import com.pure.service.impl.InfoServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.CompositeHealth;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthComponent;

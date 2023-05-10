@@ -1,4 +1,4 @@
-package com.pure.comp;
+package com.pure.component;
 
 import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.actuate.info.InfoEndpoint;

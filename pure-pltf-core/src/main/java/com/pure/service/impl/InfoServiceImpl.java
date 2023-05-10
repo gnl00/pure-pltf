@@ -1,6 +1,6 @@
 package com.pure.service.impl;
 
-import com.pure.comp.ActuatorInfo;
+import com.pure.component.ActuatorInfo;
 import com.pure.entity.info.BaseInfo;
 import com.pure.entity.info.SysInfo;
 import com.pure.service.InfoService;
@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.CompositeHealth;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthComponent;
-import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Service;
 
