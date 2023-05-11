@@ -223,10 +223,12 @@ pure-pltf-core 和 pure-pltf-lite 不再依赖 pure-pltf，直接依赖 spring-b
 
 <br>
 
-### SPI 实现动态加载
+### SPI 实现模块的动态加载
 > 详情参见 [boot-pkg](https://github.com/gnl00/boot-pkg)
 
 #### ServiceLoader 加载外部 jar
+
+<br>
 
 需要设置当前线程的上下文类加载器，加载完成后将上下文类加载器设置回原来的值，以避免影响其他模块的加载
 
@@ -260,7 +262,7 @@ java -cp application.jar org.springframework.boot.loader.JarLauncher
 
 <br>
 
-`java -jar` 执行一个封装好了的 jar 包。其中有一个 MANIFEST.MF 文件
+`java -jar` 执行一个封装好了的 jar 包，打包好的 jar 会有一个 `MANIFEST.MF` 文件
 ```manifest
 Manifest-Version: 1.0
 Created-By: Maven JAR Plugin 3.3.0
@@ -277,7 +279,8 @@ Spring-Boot-Layers-Index: BOOT-INF/layers.idx
 ```
 
 Main-Class 的一行，指明了含有 `public static void main(String[] args)` 方法的类，作为应用程序的主启动类。
-使用 -jar 时，运行的 JAR 文件的 classpath 是系统环境变量中的 CLASSPATH，其他的类路径设置将被忽略。
+使用 `-jar` 时，运行的 JAR 文件的 classpath 是系统环境变量中的 CLASSPATH，其他的类路径设置将被忽略。
+
 如果使用 `java -cp <your_classpath> -jar application.jar` 来运行程序的话，其中 `-cp` 部分指定的参数是无效的。
 
 <br>
@@ -285,9 +288,11 @@ Main-Class 的一行，指明了含有 `public static void main(String[] args)` 
 `java -cp or -classpath or --class-path <your_classpath>` 效果相同。指定 classpath 会覆盖 CLASSPATH 环境变量。
 如果没有使用类路径选项，也没有设置 classpath，那么用户的类路径由当前目录（.）组成。
 
-如果需要加载多个 JAR 文件，可以使用 `:` 来作为分隔符（Linux/Unix），Windows 使用 `;`
+如果需要加载多个 JAR 文件，Linux/Unix 使用 `:` 来作为分隔符，Windows 使用 `;`。
 
-可以使用 `*` 来加载某路径下所有 JAR 文件 `java -cp "./lib/*" <main-class>`
+`java -cp abc.jar:edf.jar:123.jar <main-class>`
+
+此外，还可以使用 `*` 来加载某路径下所有 JAR 文件 `java -cp "./lib/*" <main-class>`，加载 lib 子目录下的所有 JAR 文件。
 
 <br>
 
@@ -300,3 +305,70 @@ Main-Class 的一行，指明了含有 `public static void main(String[] args)` 
 
 
 本项目使用第一种方法。
+
+#### ServiceLoader.load() 探析
+
+```java
+public static <S> ServiceLoader<S> load(Class<S> service) {
+    // 获取当前上下文 ClassLoader
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    return new ServiceLoader<>(Reflection.getCallerClass(), service, cl);
+}
+
+private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
+    // svc => SPI 接口
+    // cl => ClassLoader
+    Objects.requireNonNull(svc);
+
+    // 如果未指定 ClassLoader 则使用 SystemClassLoader 来加载
+    if (VM.isBooted()) {
+        checkCaller(caller, svc);
+        if (cl == null) {
+            cl = ClassLoader.getSystemClassLoader();
+        }
+    } else {
+
+        // 如果当前处于 VM 初始化时机，只有 java.base 这个包内的代码能执行
+        
+        // if we get here then it means that ServiceLoader is being used
+        // before the VM initialization has completed. At this point then
+        // only code in the java.base should be executing.
+        Module callerModule = caller.getModule();
+        Module base = Object.class.getModule();
+        Module svcModule = svc.getModule();
+        if (callerModule != base || svcModule != base) {
+            fail(svc, "not accessible to " + callerModule + " during VM init");
+        }
+
+        // restricted to boot loader during startup
+        cl = null;
+    }
+
+    this.service = svc;
+    this.serviceName = svc.getName();
+    this.layer = null;
+    this.loader = cl;
+    // 返回一个 AccessControlContext
+    // AccessControlContext 用于根据它所封装的上下文做出系统资源访问决定
+    this.acc = (System.getSecurityManager() != null)
+            ? AccessController.getContext()
+            : null;
+}
+```
+
+#### 总结
+
+> 在编写这个功能时第一个想到的是 ServiceLoader.load 方法，但是刚开始没有自定义 ClassLoader，无法正常加载外部 JAR。源于对 ServiceLoader 的不够了解。
+> 
+> 然后转向另一个方法 `java -cp ./lib/* -jar application.jar` 应用启动没问题，但一开始并不知道 `-cp` 和 `-jar` 的关系。
+> 
+> 但是使用 Environment 查看 classpath 发现只有 application.jar，其他的 jar 并未被引入。
+>
+> 原来指定 `-jar` 之后会忽略 `-cp` 指定的 CLASSPATH。这两个命令使用时只能二选一。
+> 
+> 还有一点是 `java -cp ./lib/*` 需要给 `-cp` 的参数加上双引号 `java -cp "./lib/*"`，否则无法解析这条命令。
+
+
+### JAR 包的动态卸载
+
+动态卸载 JAR 实现起来相对动态加载较难，目前想到的方法就是将 JAR 包从 plugins 目录中删除，然后重启应用。
