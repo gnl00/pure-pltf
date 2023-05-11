@@ -24,7 +24,6 @@ public class BaseInfo implements Serializable {
 
     private String appName;
     private String appVersion;
-
     private String appEncoding;
     private Map<String, Object> ext;
 }
