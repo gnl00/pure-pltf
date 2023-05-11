@@ -40,3 +40,6 @@ build/
 **/.idea
 **/target
 **/logs
+
+**/plugins
+**/*.jar
