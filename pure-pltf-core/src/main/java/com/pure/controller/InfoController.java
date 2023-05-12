@@ -39,9 +39,6 @@ public class InfoController {
     private static final String ACTUATOR_SERVER_PORT = "management.server.port";
 
     @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
     private CoreConfig coreConfig;
 
     @Autowired

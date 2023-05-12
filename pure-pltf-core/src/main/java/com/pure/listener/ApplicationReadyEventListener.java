@@ -1,6 +1,6 @@
 package com.pure.listener;
 
-import com.pure.classloader.SPIClassLoader;
+import com.pure.classloader.DynamicJarClassLoader;
 import com.pure.global.GlobalConstant;
 import com.pure.global.GlobalRef;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.Objects;
 public class ApplicationReadyEventListener implements ApplicationListener<ApplicationReadyEvent> {
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        log.info("onApplicationEvent [received]");
+        // log.info("onApplicationEvent [received]");
         log.info("loading plugins");
         try {
             loadPlugins();
@@ -33,15 +33,15 @@ public class ApplicationReadyEventListener implements ApplicationListener<Applic
         }
     }
 
-    private SPIClassLoader prepareClassLoader() {
+    private DynamicJarClassLoader prepareClassLoader() {
         if (Objects.isNull(GlobalRef.pluginClassLoader)) {
-            GlobalRef.pluginClassLoader = new SPIClassLoader(new URL[]{}, getClass().getClassLoader());
+            GlobalRef.pluginClassLoader = new DynamicJarClassLoader(new URL[]{}, getClass().getClassLoader());
         }
         return GlobalRef.pluginClassLoader;
     }
 
     private void loadPlugins() throws MalformedURLException {
-        SPIClassLoader cl = prepareClassLoader();
+        DynamicJarClassLoader cl = prepareClassLoader();
         File pluginDirectory = new File(GlobalConstant.EXTERNAL_JAR_DIR);
         String[] files = pluginDirectory.list();
 
@@ -50,8 +50,11 @@ public class ApplicationReadyEventListener implements ApplicationListener<Applic
             String fullPath = filePath + filename;
             File plugin = new File(fullPath);
             cl.loadExternalJar(plugin);
-            log.info("Loaded plugin: {}", fullPath);
+
+            log.info("Loaded plugin ==> {}", fullPath);
         }
     }
+
+    private void addPlugin() {}
 
 }

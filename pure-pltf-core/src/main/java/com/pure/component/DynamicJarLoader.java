@@ -1,22 +1,20 @@
 package com.pure.component;
 
-import com.pure.base.SpiBase;
-import com.pure.spi.InfoSpi;
+import com.pure.base.SPIBase;
+import com.pure.spi.InfoHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.ServiceLoader;
 
 /**
- * SpiLoader
+ * SPILoader
  *
  * @author gnl
  * @since 2023/5/11
  */
 @Component
-public class SpiLoader {
+public class DynamicJarLoader {
     private static ClassLoader classLoader;
 
     public void load(ClassLoader cl) {
@@ -24,7 +22,7 @@ public class SpiLoader {
         classLoader = cl;
 
         Thread.currentThread().setContextClassLoader(classLoader);
-        servicesLoad(SpiLoader.class);
+        servicesLoad(InfoHandler.class);
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
     }
 
@@ -40,7 +38,7 @@ public class SpiLoader {
     public <T> void servicesLoad(Class<T> clazz) {
         ServiceLoader<T> services = ServiceLoader.load(clazz);
         for (T service : services) {
-            SpiBase svc = (SpiBase) service;
+            SPIBase svc = (SPIBase) service;
             svc.load();
         }
     }

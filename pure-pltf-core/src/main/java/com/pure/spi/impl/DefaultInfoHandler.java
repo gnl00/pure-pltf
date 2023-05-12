@@ -10,12 +10,7 @@ import com.pure.spi.InfoHandler;
  */
 public class DefaultInfoHandler implements InfoHandler {
     @Override
-    public void load() {
+    public void load() {}
 
-    }
-
-    @Override
-    public void buildInfo() {
-
-    }
+    public void buildInfo() {}
 }

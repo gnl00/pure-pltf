@@ -1,8 +1,7 @@
 package com.pure.controller;
 
-import com.pure.classloader.SPIClassLoader;
-import com.pure.component.SpiLoader;
-import com.pure.global.GlobalConstant;
+import com.pure.classloader.DynamicJarClassLoader;
+import com.pure.component.DynamicJarLoader;
 import com.pure.entity.vo.BaseInfoVo;
 import com.pure.global.GlobalRef;
 import lombok.extern.slf4j.Slf4j;
@@ -43,14 +42,14 @@ public class LoadController {
     private static final String LOCAL_JAR = "./test.jar";
 
     /**
-     * <p>有一点需要注意，需要使用加载外部 JAR 的 ClassLoader 来进行 ServiceLoader.load 操作，
-     * <p>这两个步骤需要使用相同的 ClassLoader。
-     * <p>并且 JAR 文件上传加载完成之后不可删除，
+     * <p>注意：需要使用加载外部 JAR 的 ClassLoader 来进行 ServiceLoader.load 操作
+     * <p>这两个步骤需要使用相同的 ClassLoader
+     * <p>并且 JAR 文件上传加载完成之后不可删除
      */
-    private SPIClassLoader cl;
+    private DynamicJarClassLoader cl;
 
     @Autowired
-    private SpiLoader spiLoader;
+    private DynamicJarLoader dynamicJarLoader;
 
     @Autowired
     private ConfigurableApplicationContext ac;
@@ -61,8 +60,8 @@ public class LoadController {
 
         cl = GlobalRef.pluginClassLoader;
         if (Objects.isNull(cl)) {
-            cl = new SPIClassLoader(new URL[]{}, getClass().getClassLoader());
-            GlobalRef.setGlobalClassloader(cl);
+            cl = new DynamicJarClassLoader(new URL[]{}, getClass().getClassLoader());
+            GlobalRef.setDynamicClassloader(cl);
         }
         cl.loadExternalJar(externalJar);
 
@@ -77,12 +76,12 @@ public class LoadController {
 
         Assert.notNull(cl, "SPI ClassLoader must not be null");
 
-        spiLoader.load(cl);
+        dynamicJarLoader.load(cl);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping("/external")
-    public ResponseEntity<BaseInfoVo> external(@RequestParam("file") MultipartFile multipartFile) throws IOException {
+    public ResponseEntity<String> external(@RequestParam("file") MultipartFile multipartFile) throws IOException {
         Assert.notNull(multipartFile, "Upload file is null");
 
         String fileName = multipartFile.getOriginalFilename();
@@ -96,7 +95,7 @@ public class LoadController {
         File externalJar = new File(filePath);
 
         if (externalJar.exists()) {
-            return new ResponseEntity<>(null, HttpStatus.ALREADY_REPORTED);
+            return new ResponseEntity<>("Plugin loaded", HttpStatus.ALREADY_REPORTED);
         }
 
         try (FileOutputStream fos = new FileOutputStream(externalJar))
@@ -106,8 +105,8 @@ public class LoadController {
 
             cl = GlobalRef.pluginClassLoader;
             if (Objects.isNull(cl)) {
-                cl = new SPIClassLoader(new URL[]{}, getClass().getClassLoader());
-                GlobalRef.setGlobalClassloader(cl);
+                cl = new DynamicJarClassLoader(new URL[]{}, getClass().getClassLoader());
+                GlobalRef.setDynamicClassloader(cl);
             }
             cl.loadExternalJar(externalJar);
 
@@ -116,7 +115,7 @@ public class LoadController {
 //            log.info("Loading module info");
 //            BaseInfoVo vo = loadModuleInfo();
 
-            return new ResponseEntity<>(null, HttpStatus.OK);
+            return new ResponseEntity<>("External jar loaded", HttpStatus.OK);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -131,7 +130,7 @@ public class LoadController {
         cl = GlobalRef.pluginClassLoader;
 
         Assert.notNull(cl, "SPI ClassLoader must not be null");
-        spiLoader.load(cl);
+        dynamicJarLoader.load(cl);
     }
 
     @GetMapping("/loaded")

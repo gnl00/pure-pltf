@@ -1,6 +1,6 @@
 package com.pure.impl;
 
-import com.pure.spi.InfoSpi;
+import com.pure.spi.InfoHandler;
 
 /**
  * InfoSpiImpl
@@ -8,7 +8,7 @@ import com.pure.spi.InfoSpi;
  * @author gnl
  * @since 2023/5/11
  */
-public class InfoSpiImpl implements InfoSpi {
+public class InfoHandlerImpl implements InfoHandler {
     @Override
     public void load() {
         System.out.println("InfoSpiImpl loaded");
