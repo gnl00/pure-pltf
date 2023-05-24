@@ -371,7 +371,7 @@ private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
 
 ### JAR 包的动态卸载
 
-动态卸载 JAR 实现起来相对动态加载较难，目前想到的方法就是将 JAR 包从 plugins 目录中删除，然后重启应用。
+动态卸载 JAR 实现起来相对动态加载较难，目前想到的方法就是将 JAR 包从 plugins 目录中删除，然后重启应用。还有一个办法是每动态加载一个 JAR 都使用一个单独的 ClassLoader，需要卸载该 JAR 的时候直接让 JVM 回收对应的 ClassLoader
 
 <br>
 
