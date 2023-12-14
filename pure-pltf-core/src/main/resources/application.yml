@@ -2,6 +2,9 @@ spring:
   application:
     name: @project.artifactId@
 
+pltf:
+  plugin-path: ./plugins
+
 info:
   app:
     name: ${spring.application.name}

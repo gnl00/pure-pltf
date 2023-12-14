@@ -1,7 +1,7 @@
 package com.pure.controller;
 
-import com.pure.classloader.DynamicJarClassLoader;
-import com.pure.component.DynamicJarLoader;
+import com.pure.loader.DynamicClassLoader;
+import com.pure.loader.DynamicLoader;
 import com.pure.entity.vo.BaseInfoVo;
 import com.pure.global.GlobalRef;
 import lombok.extern.slf4j.Slf4j;
@@ -23,21 +23,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.pure.global.GlobalConstant.EXTERNAL_JAR_DIR;
 import static com.pure.global.GlobalConstant.JAVA_CLASS_PATH;
 
 /**
- * LoadController
+ * TODO: CoreController
  *
  * @author gnl
  * @since 2023/5/11
  */
 @Slf4j
 @RestController
-@RequestMapping("/load")
-public class LoadController {
+public class CoreController {
 
     private static final String LOCAL_JAR = "./test.jar";
 
@@ -46,13 +46,23 @@ public class LoadController {
      * <p>这两个步骤需要使用相同的 ClassLoader
      * <p>并且 JAR 文件上传加载完成之后不可删除
      */
-    private DynamicJarClassLoader cl;
+    private DynamicClassLoader cl;
 
-    @Autowired
-    private DynamicJarLoader dynamicJarLoader;
+    private DynamicLoader dynamicLoader;
 
     @Autowired
     private ConfigurableApplicationContext ac;
+
+    @GetMapping("/info")
+    public Map<String, Object> systemProperties() {
+        return ac.getEnvironment().getSystemProperties();
+    }
+
+    @GetMapping("/classpath")
+    public String classpath() {
+        String classpath = (String) systemProperties().get(JAVA_CLASS_PATH);
+        return classpath;
+    }
 
     @GetMapping("/local")
     public ResponseEntity<Object> localExt() throws MalformedURLException {
@@ -60,7 +70,7 @@ public class LoadController {
 
         cl = GlobalRef.pluginClassLoader;
         if (Objects.isNull(cl)) {
-            cl = new DynamicJarClassLoader(new URL[]{}, getClass().getClassLoader());
+            cl = new DynamicClassLoader(new URL[]{}, getClass().getClassLoader());
             GlobalRef.setDynamicClassloader(cl);
         }
         cl.loadExternalJar(externalJar);
@@ -74,9 +84,11 @@ public class LoadController {
     public ResponseEntity<Object> localLoad() {
         cl = GlobalRef.pluginClassLoader;
 
-        Assert.notNull(cl, "SPI ClassLoader must not be null");
-
-        dynamicJarLoader.load(cl);
+        Assert.notNull(cl, "ClassLoader must not be null");
+        if (Objects.isNull(dynamicLoader)) {
+            dynamicLoader = new DynamicLoader();
+        }
+        dynamicLoader.loadOne(cl);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -105,7 +117,7 @@ public class LoadController {
 
             cl = GlobalRef.pluginClassLoader;
             if (Objects.isNull(cl)) {
-                cl = new DynamicJarClassLoader(new URL[]{}, getClass().getClassLoader());
+                cl = new DynamicClassLoader(new URL[]{}, getClass().getClassLoader());
                 GlobalRef.setDynamicClassloader(cl);
             }
             cl.loadExternalJar(externalJar);
@@ -129,8 +141,11 @@ public class LoadController {
     public void load() {
         cl = GlobalRef.pluginClassLoader;
 
-        Assert.notNull(cl, "SPI ClassLoader must not be null");
-        dynamicJarLoader.load(cl);
+        Assert.notNull(cl, "ClassLoader must not be null");
+        if (Objects.isNull(dynamicLoader)) {
+            dynamicLoader = new DynamicLoader();
+        }
+        dynamicLoader.loadOne(cl);
     }
 
     @GetMapping("/loaded")
@@ -143,12 +158,6 @@ public class LoadController {
             return new ResponseEntity<>(list, HttpStatus.OK);
         }
         return new ResponseEntity<>(null, HttpStatus.OK);
-    }
-
-    @GetMapping("/classpath")
-    public void listClasspath() {
-        Object o = ac.getEnvironment().getSystemProperties().get(JAVA_CLASS_PATH);
-        System.out.println(o);
     }
 
 }

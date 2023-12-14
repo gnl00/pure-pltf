@@ -1,14 +1,14 @@
 package com.pure.impl;
 
-import com.pure.spi.InfoHandler;
+import com.pure.spi.SQLHandler;
 
 /**
- * InfoSpiImpl
+ * SQLHandlerImpl
  *
  * @author gnl
  * @since 2023/5/11
  */
-public class InfoHandlerImpl implements InfoHandler {
+public class SQLHandlerImpl implements SQLHandler {
     @Override
     public void load() {
         System.out.println("InfoSpiImpl loaded");

@@ -1,4 +1,4 @@
-package com.pure.classloader;
+package com.pure.loader;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -6,14 +6,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * DynamicJarClassLoader
+ * DynamicClassLoader
  *
  * @author gnl
  * @since 2023/5/11
  */
-public class DynamicJarClassLoader extends URLClassLoader {
+public class DynamicClassLoader extends URLClassLoader {
 
-    public DynamicJarClassLoader(URL[] urls, ClassLoader parent) {
+    public DynamicClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
     }
 

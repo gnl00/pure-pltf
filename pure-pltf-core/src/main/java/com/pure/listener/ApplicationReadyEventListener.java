@@ -1,6 +1,6 @@
 package com.pure.listener;
 
-import com.pure.classloader.DynamicJarClassLoader;
+import com.pure.loader.DynamicClassLoader;
 import com.pure.global.GlobalConstant;
 import com.pure.global.GlobalRef;
 import lombok.extern.slf4j.Slf4j;
@@ -33,15 +33,15 @@ public class ApplicationReadyEventListener implements ApplicationListener<Applic
         }
     }
 
-    private DynamicJarClassLoader prepareClassLoader() {
+    private DynamicClassLoader prepareClassLoader() {
         if (Objects.isNull(GlobalRef.pluginClassLoader)) {
-            GlobalRef.pluginClassLoader = new DynamicJarClassLoader(new URL[]{}, getClass().getClassLoader());
+            GlobalRef.pluginClassLoader = new DynamicClassLoader(new URL[]{}, getClass().getClassLoader());
         }
         return GlobalRef.pluginClassLoader;
     }
 
     private void loadPlugins() throws MalformedURLException {
-        DynamicJarClassLoader cl = prepareClassLoader();
+        DynamicClassLoader cl = prepareClassLoader();
         File pluginDirectory = new File(GlobalConstant.EXTERNAL_JAR_DIR);
         String[] files = pluginDirectory.list();
 

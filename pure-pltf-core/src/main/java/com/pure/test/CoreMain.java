@@ -2,7 +2,6 @@ package com.pure.test;
 
 import com.pure.entity.info.BaseInfo;
 import com.pure.entity.vo.BaseInfoVo;
-import com.pure.spi.InfoHandler;
 import org.springframework.beans.BeanUtils;
 
 import java.util.Properties;
@@ -28,9 +27,7 @@ public class CoreMain {
     }
 
     public static void testSpi() {
-        ServiceLoader<InfoHandler> infoHandlers = ServiceLoader.load(InfoHandler.class);
-        InfoHandler infoHandler = infoHandlers.findFirst().orElse(null);
-        System.out.println(infoHandler);
+
     }
 
     public static void test() {
