@@ -1,18 +1,17 @@
 package com.pure.loader;
 
-import com.pure.base.PluginBase;
-import com.pure.health.InfoHandler;
+import com.pure.base.IPlugin;
 import org.springframework.util.Assert;
 
 import java.util.ServiceLoader;
 
 /**
- * DynamicLoader
+ * TestLoader
  *
  * @author gnl
- * @since 2023/5/11
+ * @date 2023/5/11
  */
-public class DynamicLoader {
+public class TestLoader {
     private static ClassLoader classLoader;
 
     public void loadOne(ClassLoader cl) {
@@ -20,7 +19,7 @@ public class DynamicLoader {
         classLoader = cl;
 
         Thread.currentThread().setContextClassLoader(classLoader);
-        servicesLoad(InfoHandler.class);
+        // servicesLoad(InfoHandler.class);
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
     }
 
@@ -36,7 +35,7 @@ public class DynamicLoader {
     public <T> void servicesLoad(Class<T> clazz) {
         ServiceLoader<T> services = ServiceLoader.load(clazz);
         for (T service : services) {
-            PluginBase svc = (PluginBase) service;
+            IPlugin svc = (IPlugin) service;
             svc.load();
         }
     }

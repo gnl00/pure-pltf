@@ -1,5 +1,6 @@
-package com.pure.entity.vo;
+package com.pure.entity.info.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pure.entity.info.SysInfo;
 import lombok.*;
 
@@ -7,9 +8,11 @@ import lombok.*;
  * SysInfoVo
  *
  * @author gnl
- * @since 2023/5/7
+ * @date 2023/5/7
  */
 @Getter
 @Setter
 public class SysInfoVo extends SysInfo {
+    @JsonIgnore
+    private String osVersion;
 }

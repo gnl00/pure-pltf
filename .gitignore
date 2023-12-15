@@ -42,4 +42,4 @@ build/
 **/logs
 
 **/plugins
-**/*.jar
+**/**.jar

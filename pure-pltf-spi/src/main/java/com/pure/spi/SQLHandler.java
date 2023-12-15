@@ -1,12 +1,12 @@
 package com.pure.spi;
 
-import com.pure.base.PluginBase;
+import com.pure.base.IPlugin;
 
 /**
  * SQLHandler
  *
  * @author gnl
- * @since 2023/5/11
+ * @date 2023/5/11
  */
-public interface SQLHandler extends PluginBase {
+public interface SQLHandler extends IPlugin {
 }

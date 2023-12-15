@@ -1,7 +1,7 @@
-package com.pure.global;
+package com.pure;
 
 import com.pure.base.Plugin;
-import com.pure.loader.DynamicClassLoader;
+import com.pure.loader.TestClassLoader;
 import org.springframework.util.Assert;
 
 import java.util.HashMap;
@@ -11,14 +11,14 @@ import java.util.Map;
  * GlobalRef
  *
  * @author gnl
- * @since 2023/5/11
+ * @date 2023/5/11
  */
 public class GlobalRef {
-    public static DynamicClassLoader pluginClassLoader;
+    public static TestClassLoader pluginClassLoader;
 
     public static Map<String, Plugin> plugins = new HashMap<>(); // cache plugins
 
-    public static void setDynamicClassloader(DynamicClassLoader classloader) {
+    public static void setDynamicClassloader(TestClassLoader classloader) {
         Assert.notNull(classloader, "Classloader cannot be null");
         pluginClassLoader = classloader;
     }

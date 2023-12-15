@@ -1,8 +1,8 @@
 package com.pure;
 
 import com.pure.component.ActuatorInfo;
-import com.pure.entity.info.BaseInfo;
-import com.pure.service.impl.InfoServiceImpl;
+import com.pure.entity.info.AppInfo;
+import com.pure.handler.DefaultInfoHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ import java.util.Map;
  * PureLiteMainTest
  *
  * @author gnl
- * @since 2023/5/7
+ * @date 2023/5/7
  */
 
 @Slf4j
@@ -27,15 +27,15 @@ import java.util.Map;
 public class PureLiteMainTest {
 
     @Autowired
-    private InfoServiceImpl infoService;
+    private DefaultInfoHandler infoService;
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
     @Test
     public void test() {
-        BaseInfo baseInfo = infoService.getBaseInfo();
-        System.out.println(baseInfo);
+        AppInfo appInfo = infoService.getAppInfo();
+        System.out.println(appInfo);
     }
 
     @Test

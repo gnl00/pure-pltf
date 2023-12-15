@@ -1,6 +1,12 @@
 package com.pure.base;
 
-public interface PluginBase {
+/**
+ * Base interface for all plugins
+ *
+ * @author gnl
+ * @date 2023/12/15
+ */
+public interface IPlugin {
 
     default void beforeLoad() {}
 
@@ -12,7 +18,7 @@ public interface PluginBase {
 
     default void beforeExec() {}
 
-    default void exec() {}
+    void exec();
 
     default void afterExec() {}
 

@@ -6,14 +6,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * DynamicClassLoader
+ * TestClassLoader
  *
  * @author gnl
- * @since 2023/5/11
+ * @date 2023/5/11
  */
-public class DynamicClassLoader extends URLClassLoader {
+public class TestClassLoader extends URLClassLoader {
 
-    public DynamicClassLoader(URL[] urls, ClassLoader parent) {
+    public TestClassLoader(URL[] urls, ClassLoader parent) {
         super(urls, parent);
     }
 

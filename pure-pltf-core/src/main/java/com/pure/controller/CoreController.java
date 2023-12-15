@@ -1,12 +1,10 @@
 package com.pure.controller;
 
-import com.pure.loader.DynamicClassLoader;
-import com.pure.loader.DynamicLoader;
-import com.pure.entity.vo.BaseInfoVo;
-import com.pure.global.GlobalRef;
+import com.pure.entity.info.vo.AppInfoVo;
+import com.pure.loader.TestClassLoader;
+import com.pure.loader.TestLoader;
+import com.pure.GlobalRef;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -23,17 +21,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
-import static com.pure.global.GlobalConstant.EXTERNAL_JAR_DIR;
-import static com.pure.global.GlobalConstant.JAVA_CLASS_PATH;
+import static com.pure.constant.CoreConstant.EXTERNAL_JAR_DIR;
 
 /**
- * TODO: CoreController
+ * CoreController
  *
  * @author gnl
- * @since 2023/5/11
+ * @date 2023/5/11
  */
 @Slf4j
 @RestController
@@ -46,23 +42,10 @@ public class CoreController {
      * <p>这两个步骤需要使用相同的 ClassLoader
      * <p>并且 JAR 文件上传加载完成之后不可删除
      */
-    private DynamicClassLoader cl;
+    private TestClassLoader cl;
 
-    private DynamicLoader dynamicLoader;
+    private TestLoader testLoader;
 
-    @Autowired
-    private ConfigurableApplicationContext ac;
-
-    @GetMapping("/info")
-    public Map<String, Object> systemProperties() {
-        return ac.getEnvironment().getSystemProperties();
-    }
-
-    @GetMapping("/classpath")
-    public String classpath() {
-        String classpath = (String) systemProperties().get(JAVA_CLASS_PATH);
-        return classpath;
-    }
 
     @GetMapping("/local")
     public ResponseEntity<Object> localExt() throws MalformedURLException {
@@ -70,7 +53,7 @@ public class CoreController {
 
         cl = GlobalRef.pluginClassLoader;
         if (Objects.isNull(cl)) {
-            cl = new DynamicClassLoader(new URL[]{}, getClass().getClassLoader());
+            cl = new TestClassLoader(new URL[]{}, getClass().getClassLoader());
             GlobalRef.setDynamicClassloader(cl);
         }
         cl.loadExternalJar(externalJar);
@@ -85,10 +68,10 @@ public class CoreController {
         cl = GlobalRef.pluginClassLoader;
 
         Assert.notNull(cl, "ClassLoader must not be null");
-        if (Objects.isNull(dynamicLoader)) {
-            dynamicLoader = new DynamicLoader();
+        if (Objects.isNull(testLoader)) {
+            testLoader = new TestLoader();
         }
-        dynamicLoader.loadOne(cl);
+        testLoader.loadOne(cl);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -117,7 +100,7 @@ public class CoreController {
 
             cl = GlobalRef.pluginClassLoader;
             if (Objects.isNull(cl)) {
-                cl = new DynamicClassLoader(new URL[]{}, getClass().getClassLoader());
+                cl = new TestClassLoader(new URL[]{}, getClass().getClassLoader());
                 GlobalRef.setDynamicClassloader(cl);
             }
             cl.loadExternalJar(externalJar);
@@ -133,7 +116,7 @@ public class CoreController {
         }
     }
 
-    private BaseInfoVo loadModuleInfo() {
+    private AppInfoVo loadCustomInfo() {
         return null;
     }
 
@@ -142,10 +125,10 @@ public class CoreController {
         cl = GlobalRef.pluginClassLoader;
 
         Assert.notNull(cl, "ClassLoader must not be null");
-        if (Objects.isNull(dynamicLoader)) {
-            dynamicLoader = new DynamicLoader();
+        if (Objects.isNull(testLoader)) {
+            testLoader = new TestLoader();
         }
-        dynamicLoader.loadOne(cl);
+        testLoader.loadOne(cl);
     }
 
     @GetMapping("/loaded")
