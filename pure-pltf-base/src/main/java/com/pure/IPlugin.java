@@ -1,4 +1,4 @@
-package com.pure.base;
+package com.pure;
 
 /**
  * Base interface for all plugins

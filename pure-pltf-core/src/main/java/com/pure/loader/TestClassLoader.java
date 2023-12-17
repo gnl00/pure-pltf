@@ -13,13 +13,18 @@ import java.net.URLClassLoader;
  */
 public class TestClassLoader extends URLClassLoader {
 
-    public TestClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
+    public TestClassLoader(URL[] urls) {
+        super(urls);
     }
 
     public void loadExternalJar(File externalJar) throws MalformedURLException {
         URL url = externalJar.toURI().toURL();
         addURL(url);
+    }
+
+    public void load(URL url) {
+        addURL(url);
+
     }
 
     // TODO: unload the loaded jar

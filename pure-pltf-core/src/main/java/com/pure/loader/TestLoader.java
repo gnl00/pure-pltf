@@ -1,6 +1,6 @@
 package com.pure.loader;
 
-import com.pure.base.IPlugin;
+import com.pure.IPlugin;
 import org.springframework.util.Assert;
 
 import java.util.ServiceLoader;

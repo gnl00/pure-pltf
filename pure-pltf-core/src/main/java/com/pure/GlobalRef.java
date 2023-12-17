@@ -1,6 +1,5 @@
 package com.pure;
 
-import com.pure.base.Plugin;
 import com.pure.loader.TestClassLoader;
 import org.springframework.util.Assert;
 

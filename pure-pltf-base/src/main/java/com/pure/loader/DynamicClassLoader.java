@@ -1,5 +1,10 @@
 package com.pure.loader;
 
+import com.pure.Plugin;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -11,12 +16,24 @@ import java.util.Objects;
  * @author gnl
  * @date 2023/5/11
  */
+@Getter
+@Setter
+@ToString
 public class DynamicClassLoader {
 
+    private Plugin plugin; // load for which plugin? this filed will tell you
+    @ToString.Exclude
     private final InnerReference<InnerClassLoader> innerReference;
 
-    public DynamicClassLoader() {
+    public DynamicClassLoader(URL url) {
         innerReference = new InnerReference<>(new InnerClassLoader(new URL[]{}));
+        add(url);
+    }
+
+    public DynamicClassLoader(Plugin plugin, URL url) {
+        this.plugin = plugin;
+        innerReference = new InnerReference<>(new InnerClassLoader(new URL[]{}));
+        add(url);
     }
 
     public void show() {
