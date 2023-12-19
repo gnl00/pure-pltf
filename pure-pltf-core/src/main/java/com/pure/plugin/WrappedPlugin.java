@@ -1,12 +1,12 @@
-package com.pure;
+package com.pure.plugin;
 
+import com.pure.Plugin;
 import com.pure.loader.DynamicClassLoader;
 import lombok.*;
 
 import java.util.Objects;
 
 @Data
-@Builder
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor

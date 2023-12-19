@@ -2,7 +2,6 @@ package com.pure.controller;
 
 import com.pure.Plugin;
 import com.pure.handler.PluginHandler;
-import com.pure.loader.TestClassLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,7 +16,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.ServiceLoader;
 
 /**
  * PluginController
@@ -74,18 +72,12 @@ public class PluginController {
     }
 
     private String install(URL url) {
-        TestClassLoader classLoader = new TestClassLoader(new URL[]{url});
-        for (Plugin plugin : ServiceLoader.load(Plugin.class, classLoader)) {
-            System.out.println(plugin);
-            plugin.exec();
+        int check = 0;
+        if ((check = pluginHandler.install(url)) == -1) {
+            return "plugin already exists";
+        } else if (check == 0) {
+            return "plugin install failed";
         }
-//        int check = 0;
-//        if ((check = pluginHandler.install(url)) == -1) {
-//            return "plugin already exists";
-//        } else if (check == 0) {
-//            return "plugin install failed";
-//        }
-
         return "plugin install successfully";
     }
 
@@ -110,7 +102,7 @@ public class PluginController {
 
     @GetMapping("/test")
     public String test() {
-        pluginHandler.install(null);
+        install(null);
         return "test";
     }
 }

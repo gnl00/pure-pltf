@@ -1,12 +1,12 @@
 package com.pure;
 
 /**
- * Base interface for all plugins
+ * PluginHook
  *
  * @author gnl
  * @date 2023/12/15
  */
-public interface IPlugin {
+public interface PluginHook {
 
     default void beforeLoad() {}
 

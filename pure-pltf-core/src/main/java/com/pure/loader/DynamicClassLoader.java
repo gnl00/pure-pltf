@@ -30,12 +30,6 @@ public class DynamicClassLoader {
         add(url);
     }
 
-    public DynamicClassLoader(Plugin plugin, URL url) {
-        this.plugin = plugin;
-        innerReference = new InnerReference<>(new InnerClassLoader(new URL[]{}));
-        add(url);
-    }
-
     public void show() {
         System.out.println(innerReference.get());
         release();

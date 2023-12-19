@@ -1,6 +1,6 @@
 package com.pure.loader;
 
-import com.pure.IPlugin;
+import com.pure.Plugin;
 import org.springframework.util.Assert;
 
 import java.util.ServiceLoader;
@@ -35,7 +35,7 @@ public class TestLoader {
     public <T> void servicesLoad(Class<T> clazz) {
         ServiceLoader<T> services = ServiceLoader.load(clazz);
         for (T service : services) {
-            IPlugin svc = (IPlugin) service;
+            Plugin svc = (Plugin) service;
             svc.load();
         }
     }

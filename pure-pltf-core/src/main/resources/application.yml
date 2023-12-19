@@ -3,7 +3,7 @@ spring:
     name: @project.artifactId@
 
 pltf:
-  plugin-path: ./plugins
+  plugin-dir: ./plugins
 
 info:
   app:

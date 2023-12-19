@@ -8,8 +8,9 @@ public class ExamplePlugin extends Plugin {
         System.out.println("executing example plugin...");
     }
 
+
     @Override
-    public Metadata init() {
-        return new Metadata("example-plugin", "a example plugin", "1.0");
+    public Plugin.Metadata init() {
+        return new Metadata("example", "example plugin", "1.0.0");
     }
 }

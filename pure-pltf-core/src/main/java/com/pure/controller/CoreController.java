@@ -5,6 +5,7 @@ import com.pure.entity.info.vo.AppInfoVo;
 import com.pure.loader.TestClassLoader;
 import com.pure.loader.TestLoader;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
@@ -19,8 +20,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import static com.pure.constant.CoreConstant.EXTERNAL_JAR_DIR;
 
 /**
  * CoreController
@@ -128,9 +127,12 @@ public class CoreController {
         testLoader.loadOne(cl);
     }
 
+    @Value("${pltf.plugin-dir}")
+    private String pluginDir;
+
     @GetMapping("/loaded")
     public ResponseEntity<List<String>> loaded() throws IOException {
-        Path pluginPath = Paths.get(EXTERNAL_JAR_DIR);
+        Path pluginPath = Paths.get(pluginDir);
         if (Files.isDirectory(pluginPath)) {
             File pluginDirectory = new File(pluginPath.toUri());
             String[] files = pluginDirectory.list();

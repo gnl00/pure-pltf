@@ -1,37 +1,35 @@
 package com.pure;
 
 import lombok.Data;
-import lombok.ToString;
 
-@ToString
-public abstract class Plugin implements IPlugin {
+public abstract class Plugin implements PluginHook {
+
+    public static final int MIN_PRIORITY = 1;
+    public static final int MAX_PRIORITY = 99;
+    public static final int DEFAULT_PRIORITY = MIN_PRIORITY;
 
     private final Metadata metadata;
 
     public Plugin() {
-        System.out.println("Plugin no args constructor");
         this.metadata = init();
     }
 
     public abstract Metadata init();
 
     public String getName() {
-        return metadata.name;
+        return metadata.getName();
     }
 
-    public String getDesc() {
-        return metadata.description;
+    public String getDescription() {
+        return metadata.getDescription();
     }
 
     public String getVersion() {
-        return metadata.version;
+        return metadata.getVersion();
     }
 
     @Data
     public static class Metadata {
-
-        public Metadata() {}
-
         public Metadata(String name, String description, String version) {
             this.name = name;
             this.description = description;
@@ -41,5 +39,6 @@ public abstract class Plugin implements IPlugin {
         private String name;
         private String description;
         private String version;
+        private int priority = DEFAULT_PRIORITY; // 插件加载优先级，默认为 1
     }
 }

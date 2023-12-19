@@ -142,7 +142,7 @@ pure-pltf-core 和 pure-pltf-lite 不再依赖 pure-pltf，直接依赖 spring-b
 当前项目中用到的 springboot 版本是 2.7.11，直接添加 info 未生效。
 
 ...
- 
+
 需要手动注入一个 EnvironmentInfoContributor
 
 ```java
@@ -398,16 +398,259 @@ private ServiceLoader(Class<?> caller, Class<S> svc, ClassLoader cl) {
 
 ### JAR 包的动态卸载
 
-动态卸载 JAR 实现起来相对动态加载较难，目前想到的方法：
+动态卸载 JAR 目前想到的方法：
 1. 将 JAR 包从 plugins 目录中删除，然后重启应用；
-2. 每动态加载一个 JAR 都使用一个单独的 ClassLoader，需要卸载该 JAR 的时候直接让 JVM 回收对应的 ClassLoader
+2. 每动态加载一个 JAR 都使用一个单独的 ClassLoader，需要卸载该 JAR 的时候直接让 JVM 回收对应的 ClassLoader（目前选择了此方法）
+
+...
+
+---
+
+### Ddev-tools 之 ClassLoader 坑
+
+有一段代码如下
+
+```java
+Path pkgPath = Paths.get("pure-pltf-plugin-example-1.0-SNAPSHOT.jar");
+File file = pkgPath.toFile();
+URL url = file.toURI().toURL();
+TestClassLoader classLoader = new TestClassLoader(new URL[]{url});
+ServiceLoader<SPI> services = ServiceLoader.load(SPI.class, classLoader);
+System.out.println(SPI.class.getClassLoader());
+for (SPI service : services) {
+  System.out.println(service);
+  service.print();
+}
+```
+
+使用自定义的 ClassLoader 加载根目录的 jar 包，很简单的逻辑。
+
+但是这段代码在不同的类居然会有不同的表现？
+
+先来看一下目录结构
+
+```shell
+pure-pltf
+├── pure-pltf-base SPI 接口在这里
+├── pure-pltf-core 我们定义的代码在这里
+├── pure-pltf-plugin-example 这里有 SPI 的实现 SPIImpl
+├── ...
+```
+
+其中 SPIImpl 的实现如下
+
+```java
+public class SPIImpl implements SPI {
+    @Override
+    public void print() {
+        System.out.println("+++++ implement output +++++");
+        System.out.println("spi implement...");
+    }
+}
+```
+
+接下来在一个普通的 core 目录中的一个普通类实现上面的代码并运行
+
+```java
+public class Test {
+    public static void main(String[] args) throws MalformedURLException {
+        Path pkgPath = Paths.get("pure-pltf-plugin-example-1.0-SNAPSHOT.jar");
+        File file = pkgPath.toFile();
+        URL url = file.toURI().toURL();
+        TestClassLoader classLoader = new TestClassLoader(new URL[]{url});
+        ServiceLoader<SPI> services = ServiceLoader.load(SPI.class, classLoader);
+        for (SPI service : services) {
+            service.print();
+        }
+    }
+}
+```
+
+运行成功输出内容如下：
+
+```
++++++ implement output +++++
+spi implement...
+```
+
+很好，符合我们的要求。
+
+接下来将这段代码放到 Controller 中实现
+
+```java
+@GetMapping("/test")
+public void test() {
+  try {
+    Path pkgPath = Paths.get("pure-pltf-plugin-example-1.0-SNAPSHOT.jar");
+    File file = pkgPath.toFile();
+    URL url = file.toURI().toURL();
+    TestClassLoader classLoader = new TestClassLoader(new URL[]{url});
+    ServiceLoader<SPI> services = ServiceLoader.load(SPI.class, classLoader);
+    System.out.println("===== classloader in controller =====");
+    System.out.println(SPI.class.getClassLoader());
+    for (SPI service : services) {
+      System.out.println(service);
+      service.print();
+    }
+  } catch (MalformedURLException e) {
+    throw new RuntimeException(e);
+  }
+}
+```
+
+结果如下：
+
+```
+java.util.ServiceConfigurationError: com.pure.SPI: com.example.SPIImpl not a subtype
+	at java.util.ServiceLoader.fail(ServiceLoader.java:593) ~[?:?]
+	at java.util.ServiceLoader$LazyClassPathLookupIterator.hasNextService(ServiceLoader.java:1244) ~[?:?]
+	at java.util.ServiceLoader$LazyClassPathLookupIterator.hasNext(ServiceLoader.java:1273) ~[?:?]
+	at java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309) ~[?:?]
+	at java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393) ~[?:?]
+	at com.pure.controller.PluginController.install(PluginController.java:85) ~[classes/:?]
+	at com.pure.controller.PluginController.test(PluginController.java:123) ~[classes/:?]
+```
+
+？？？
+
+上文中已经贴出 SPIImpl 的代码
+
+```java
+public class SPIImpl implements SPI
+```
+
+**SPIImpl 已经实现了 SPI 接口**，为什么报错 `com.pure.SPI: com.example.SPIImpl not a subtype` SPIImpl  不是 SPI 的子类？
+
+> 可恶！
+
+哪里出问题了呢？
+
+> **问题出现在 ClassLoader 上**。
+
+因为加载 SPI 的 ClassLoader 不一致，导致当前 JVM 中就出现了两个 SPI 类元对象。
+
+让我们修改一下实现类
+
+```java
+public class SPIImpl implements SPI {
+    @Override
+    public void print() {
+        System.out.println("===== classloader in implement =====");
+        System.out.println(SPI.class.getClassLoader());
+        System.out.println("+++++ implement output +++++");
+        System.out.println("spi implement...");
+    }
+}
+```
+
+将 SPI 的 ClassLoader 输出看看
+
+```
+===== classloader in implement =====
+jdk.internal.loader.ClassLoaders$AppClassLoader@2b193f2d
++++++ implement output +++++
+spi implement...
+```
+
+是熟悉的 AppClassLoader。
+
+回头再看看 Controller 中 SPI 类的 ClassLoader
+
+```java
+@GetMapping("/test")
+public void test() {
+  try {
+    Path pkgPath = Paths.get("pure-pltf-plugin-example-1.0-SNAPSHOT.jar");
+    File file = pkgPath.toFile();
+    URL url = file.toURI().toURL();
+    TestClassLoader classLoader = new TestClassLoader(new URL[]{url});
+    ServiceLoader<SPI> services = ServiceLoader.load(SPI.class, classLoader);
+    System.out.println("===== classloader in controller ====="); // 加上1
+    System.out.println(SPI.class.getClassLoader()); // 加上2
+    for (SPI service : services) {
+      System.out.println(service);
+      service.print();
+    }
+  } catch (MalformedURLException e) {
+    throw new RuntimeException(e);
+  }
+}
+```
+
+加上 2 行代码，运行查看输出
+
+```
+===== classloader in controller =====
+org.springframework.boot.devtools.restart.classloader.RestartClassLoader@36d931b9
+```
+
+恍然大悟。
+
+> 可恶！devtools！
+
+结果正如上面说的一样，是因为加载 SPI 的两个 ClassLoader 不一致，导致的这个问题。
+
+> 接下来只要将 devtools 依赖去掉即可。
+
+去掉之后再次查看输出：
+
+```
+===== classloader in controller =====
+jdk.internal.loader.ClassLoaders$AppClassLoader@2b193f2d
+com.example.SPIImpl@24ef3a3e
+===== classloader in implement =====
+jdk.internal.loader.ClassLoaders$AppClassLoader@2b193f2d
++++++ implement output +++++
+spi implement...
+```
+
+舒服了:satisfied:
+
+...
+
+---
 
 <br>
 
-
 ## 碎碎念
 
+**Update-4**
+目前在拆分项目，从 pure-pltf-core 拆出 pure-pltf-base。在 base 中定义插件接口，后面自定义插件只需要依赖 base 就可以了。
+
+然后编写了一个插件样例，pure-pltf-plugin-example，引入 base 依赖，其中只有一个类
+
+```java
+public class ExamplePlugin implements Plugin {
+    @Override
+    public void exec() {
+        System.out.println("executing example plugin...");
+    }
+
+    @Override
+    public Metadata init() {
+        return new Metadata("example-plugin", "a example plugin", "1.0");
+    }
+}
+```
+
+接着就开心的去测试了…
+
+结果，
+
+加载插件的时候报错
+
+```java
+java.util.ServiceConfigurationError: com.pure.Plugin: com.example.ExamplePlugin not a subtype
+```
+
+WTF？？
+
+OK 开始排查。
+
+
+
 **Update-3**
+
 > 手动注入一个 EnvironmentInfoContributor 读取配置文件中的自定义 info
 
 **Update-2**
