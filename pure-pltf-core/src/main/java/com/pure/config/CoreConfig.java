@@ -1,6 +1,8 @@
 package com.pure.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
 import org.springframework.boot.actuate.info.EnvironmentInfoContributor;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -8,17 +10,30 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
+import java.util.Set;
+
 /**
  * CoreConfig
  *
  * @author gnl
  * @since 2023/5/7
  */
+@Slf4j
 @Configuration
 public class CoreConfig {
 
     @Autowired
     private ConfigurableApplicationContext ac;
+
+    @Autowired
+    private WebEndpointProperties webEndpoint;
+
+    @PostConstruct
+    public void afterConstruct() {
+        log.info("WebEndpointProperties expose: {}", "*");
+        webEndpoint.getExposure().setInclude(Set.of("*"));
+    }
 
     /**
      * 自定义 actuator/info 信息
@@ -32,13 +47,12 @@ public class CoreConfig {
         return new EnvironmentInfoContributor(environment);
     }
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-
     public String getValueFromProperties(String key) {
         return ac.getEnvironment().getProperty(key);
     }
 
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 }

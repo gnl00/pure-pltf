@@ -4,7 +4,6 @@ import com.pure.Plugin;
 import com.pure.loader.DynamicClassLoader;
 import com.pure.plugin.WrappedPlugin;
 import com.pure.loader.DynamicLoader;
-import com.pure.loader.TestClassLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -49,27 +48,30 @@ static {
         DynamicClassLoader dcl = new DynamicClassLoader(url);
         ServiceLoader<Plugin> plugins = dynamicLoader.load(dcl.instance(), Plugin.class);
 
-        // 只处理第一个 plugin
         // 强制要求所有的插件都只能有一个 Plugin 的实现类
-        Plugin plugin = plugins.stream().findFirst().get().get();
-        // check if plugin already installed
-        String plgName = plugin.getName();
-        log.info("handling plugin: {}", plgName);
-        if (PLUGINS.containsKey(plgName)) {
-            log.info("plugin {} already installed", plgName);
-            return -1;
+        // 所以只需要处理第一个 plugin
+        Plugin plugin = plugins.findFirst().isPresent() ? plugins.findFirst().get() : null;
+        if (Objects.nonNull(plugin)) {
+            // check if plugin already installed
+            String plgName = plugin.getName();
+
+            if (PLUGINS.containsKey(plgName)) {
+                log.info("plugin {} already installed", plgName);
+                return -1;
+            }
+
+            dcl.setPlugin(plugin);
+            // add a wrapper for plugin and classloader, to avoid classloader leak
+            WrappedPlugin wp = new WrappedPlugin();
+            wp.setPlugin(plugin);
+            wp.setPluginLoader(dcl);
+            wp.setIsEnable(true);
+
+            PLUGINS.put(plgName, wp);
+            log.info("plugin installed: {}", plgName);
+            return 1;
         }
-
-        dcl.setPlugin(plugin);
-        // add a wrapper for plugin and classloader, to avoid classloader leak
-        WrappedPlugin wp = new WrappedPlugin();
-        wp.setPlugin(plugin);
-        wp.setPluginLoader(dcl);
-        wp.setIsEnable(true);
-
-        PLUGINS.put(plgName, wp);
-        log.info("plugin installed: {}", plgName);
-        return 1;
+        return -1;
     }
 
     private int installOne(URL url) {

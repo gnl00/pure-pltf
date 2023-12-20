@@ -1,8 +1,4 @@
-package com.pure.handler;
-
-import com.pure.base.BaseInfo;
-import com.pure.entity.info.AppInfo;
-import com.pure.entity.info.SysInfo;
+package com.pure;
 
 import java.util.ServiceLoader;
 
@@ -15,10 +11,6 @@ import java.util.ServiceLoader;
 public abstract class InfoHandler<T extends BaseInfo> {
 
     private static BaseInfo sharedAdditionInfo;
-
-    public SysInfo getSysInfo() {return null;}
-
-    public AppInfo getAppInfo() { return null;}
 
     protected void setAdditionalInfo(T info){
         System.out.println("setting additional info");

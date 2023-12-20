@@ -61,6 +61,13 @@ pure-pltf
 
 将 pure-pltf-spi-impl 的 target 目录下 jar 包拷贝到根目录的 plugins 文件夹下。
 应用启动完成后会通过 ApplicationReadyEvent 来自动加载 plugins 文件夹下的 jar 包。
+可以在配置文件中自定义插件文件夹
+
+```yaml
+pltf:
+  pluginDir: './plugins'
+```
+
 
 > 后续会通过插件元数据：版本号来判断是否需要更新插件；判断插件加载优先级等。
 
@@ -76,7 +83,7 @@ pure-pltf
 
 - [x] 信息收集与扩展接口
 - [x] 插件手动安装
-- [ ] 插件自动安装
+- [x] 插件自动加载
 - [ ] 插件卸载
 - [ ] 插件触发时机
 - [ ] 完成 Web 界面

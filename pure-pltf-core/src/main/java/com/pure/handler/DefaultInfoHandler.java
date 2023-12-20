@@ -1,7 +1,8 @@
 package com.pure.handler;
 
-import com.pure.base.BaseInfo;
-import com.pure.component.ActuatorInfo;
+import com.pure.BaseInfo;
+import com.pure.InfoHandler;
+import com.pure.config.ActuatorConfig;
 import com.pure.entity.info.AppInfo;
 import com.pure.entity.info.SysInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +36,8 @@ public class DefaultInfoHandler extends InfoHandler {
     private String appVersion;
 
     @Autowired
-    private ActuatorInfo actuatorInfo;
+    private ActuatorConfig actuatorInfo;
 
-    @Override
     public AppInfo getAppInfo() {
 
         AppInfo appInfo = AppInfo.builder()
@@ -50,7 +50,6 @@ public class DefaultInfoHandler extends InfoHandler {
         return appInfo;
     }
 
-    @Override
     public SysInfo getSysInfo() {
         Map<String, Object> systemProperties = ac.getEnvironment().getSystemProperties();
         String javaRuntimeVersion = (String) systemProperties.get(JAVA_RUNTIME_VERSION);

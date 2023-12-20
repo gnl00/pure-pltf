@@ -1,6 +1,6 @@
 package com.pure.entity;
 
-import com.pure.base.BaseInfo;
+import com.pure.BaseInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

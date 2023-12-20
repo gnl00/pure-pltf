@@ -1,6 +1,6 @@
 package com.pure;
 
-import com.pure.component.ActuatorInfo;
+import com.pure.config.ActuatorConfig;
 import com.pure.entity.info.AppInfo;
 import com.pure.handler.DefaultInfoHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +64,7 @@ public class PureLiteMainTest {
     }
 
     @Autowired
-    private ActuatorInfo actuatorInfo;
+    private ActuatorConfig actuatorInfo;
 
     @Test
     public void test4() {

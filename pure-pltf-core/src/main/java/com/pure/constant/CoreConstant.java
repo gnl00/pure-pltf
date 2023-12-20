@@ -7,7 +7,6 @@ package com.pure.constant;
  * @date 2023/5/11
  */
 public interface CoreConstant {
-    String EXTERNAL_JAR_DIR = "./plugins/";
     // env properties key
     String JAVA_CLASS_PATH = "java.class.path";
     String JAVA_RUNTIME_VERSION = "java.runtime.version";

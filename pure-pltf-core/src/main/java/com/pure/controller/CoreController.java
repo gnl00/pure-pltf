@@ -1,14 +1,12 @@
 package com.pure.controller;
 
-import com.pure.GlobalRef;
 import com.pure.entity.info.vo.AppInfoVo;
-import com.pure.loader.TestClassLoader;
-import com.pure.loader.TestLoader;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.autoconfigure.health.HealthEndpointProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +17,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * CoreController
@@ -31,16 +28,11 @@ import java.util.Objects;
 @RestController
 public class CoreController {
 
-    private static final String LOCAL_JAR = "./test.jar";
-
     /**
      * <p>注意：需要使用加载外部 JAR 的 ClassLoader 来进行 ServiceLoader.load 操作
      * <p>这两个步骤需要使用相同的 ClassLoader
      * <p>并且 JAR 文件上传加载完成之后不可删除
      */
-    private TestClassLoader cl;
-
-    private TestLoader testLoader;
 
 
 //    @GetMapping("/local")
@@ -59,17 +51,17 @@ public class CoreController {
 //        return new ResponseEntity<>(HttpStatus.OK);
 //    }
 
-    @GetMapping("/localExec")
-    public ResponseEntity<Object> localLoad() {
-        cl = GlobalRef.pluginClassLoader;
-
-        Assert.notNull(cl, "ClassLoader must not be null");
-        if (Objects.isNull(testLoader)) {
-            testLoader = new TestLoader();
-        }
-        testLoader.loadOne(cl);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
+//    @GetMapping("/localExec")
+//    public ResponseEntity<Object> localLoad() {
+//        cl = GlobalRef.pluginClassLoader;
+//
+//        Assert.notNull(cl, "ClassLoader must not be null");
+//        if (Objects.isNull(testLoader)) {
+//            testLoader = new TestLoader();
+//        }
+//        testLoader.loadOne(cl);
+//        return new ResponseEntity<>(HttpStatus.OK);
+//    }
 
 //    @PostMapping("/external")
 //    public ResponseEntity<String> external(@RequestParam("file") MultipartFile multipartFile) throws IOException {
@@ -116,30 +108,15 @@ public class CoreController {
         return null;
     }
 
-    @GetMapping("/exec")
-    public void load() {
-        cl = GlobalRef.pluginClassLoader;
-
-        Assert.notNull(cl, "ClassLoader must not be null");
-        if (Objects.isNull(testLoader)) {
-            testLoader = new TestLoader();
-        }
-        testLoader.loadOne(cl);
-    }
-
-    @Value("${pltf.plugin-dir}")
-    private String pluginDir;
-
-    @GetMapping("/loaded")
-    public ResponseEntity<List<String>> loaded() throws IOException {
-        Path pluginPath = Paths.get(pluginDir);
-        if (Files.isDirectory(pluginPath)) {
-            File pluginDirectory = new File(pluginPath.toUri());
-            String[] files = pluginDirectory.list();
-            List<String> list = Arrays.asList(files);
-            return new ResponseEntity<>(list, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(null, HttpStatus.OK);
-    }
+//    @GetMapping("/exec")
+//    public void load() {
+//        cl = GlobalRef.pluginClassLoader;
+//
+//        Assert.notNull(cl, "ClassLoader must not be null");
+//        if (Objects.isNull(testLoader)) {
+//            testLoader = new TestLoader();
+//        }
+//        testLoader.loadOne(cl);
+//    }
 
 }

@@ -2,7 +2,7 @@ package com.pure.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pure.base.BaseInfo;
+import com.pure.BaseInfo;
 import com.pure.config.CoreConfig;
 import com.pure.entity.info.AppInfo;
 import com.pure.entity.info.SysInfo;
@@ -49,7 +49,7 @@ public class InfoController {
     private ConfigurableApplicationContext ac;
 
     @Autowired
-    private CoreConfig coreConfig;
+    private CoreConfig config;
 
     @Autowired
     private DefaultInfoHandler defaultInfo;
@@ -123,8 +123,8 @@ public class InfoController {
     }
 
     private Map<String, Object> getHealthFromActuator() {
-        String actuatorServerPort = coreConfig.getValueFromProperties(ACTUATOR_SERVER_PORT);
-        String serverPort = coreConfig.getValueFromProperties(SERVER_PORT);
+        String actuatorServerPort = config.getValueFromProperties(ACTUATOR_SERVER_PORT);
+        String serverPort = config.getValueFromProperties(SERVER_PORT);
 
         String port = null;
         if (Objects.nonNull(actuatorServerPort)) {

@@ -614,7 +614,147 @@ spi implement...
 
 ## 碎碎念
 
+**Update-5**
+
+> 记一次 BeanPostProcessor 的使用
+
+目前项目结构如下
+
+```
+pure-pltf
+├── pure-pltf-base
+├── pure-pltf-core 这里有一个 application.yaml
+├── pure-pltf-lite 这里也有一个 application.yaml
+├── pure-pltf-plugin-example
+├── ...
+```
+
+其中
+
+core/appilcation.yaml 内容如下
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+```
+
+> 很简单，将端口暴露并展示应用健康的详细信息。
+
+但是，SpringBoot 的 main 方法是定义再 lite 中的，无法获取到 core 中的 application.yaml 配置，所以说这个配置是无效的。SpringBoot 无法获取到 core/appilcation.yaml 配置中的内容。
+
+…
+
+> 于是就想着在代码中完成这一配置。
+
+主要修改 pure-pltf-core 中的内容。修改 SpringBoot 内置类的属性，很容易就能想到：利用 @Autowired 获取该类的实例，然后修改属性。
+
+是的，第一次尝试我也是这么做的。
+
+在配置类中添加代码
+
+```java
+@Autowired
+private HealthEndpointProperties healthEndpoint;
+
+@PostConstruct
+public void afterConstruct() {
+  log.info("HealthEndpointProperties setShowDetails: {}", "Show.ALWAYS");
+  healthEndpoint.setShowDetails(HealthProperties.Show.ALWAYS); // 如何找到这个配置的呢？从 spring-boot-actuator 源码中
+}
+```
+
+为了测试再从 Controller 输出
+
+```java
+@Autowired
+private HealthEndpointProperties healthEndpoint;
+
+@GetMapping("/test")
+public void test() {
+  System.out.println(healthEndpoint.getShowDetails());
+}
+```
+
+运行并请求，查看输出
+
+```
+ALWAYS
+```
+
+修改成功，接下来请求 `http://localhost:8080/actuator/health`，查看是否输出了详细的健康信息
+
+```json
+{
+    "status": "UP"
+}
+```
+
+遗憾的是并没有。
+
+> 属性修改成功了，但是产生的效果和我们预期的并不一样。
+
+什么原因呢？
+
+> 是**因为属性设置的时机不对**，我们一开始选择配置类中的 @PostConstruct 设置 HealthEndpointProperties#setShowDetails 的时机不对。
+
+只能是因为设置值得时机慢了。如何解决？
+
+可以使用 BeanPostProcessor
+
+```java
+@Component
+public class HealthEndpointPropertiesPostProcessor implements BeanPostProcessor {
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        if (bean instanceof HealthEndpointProperties) {
+            HealthEndpointProperties healthEndpoint = (HealthEndpointProperties) bean;
+            healthEndpoint.setShowDetails(HealthEndpointProperties.Show.ALWAYS);
+        }
+        return bean;
+    }
+}
+```
+
+只要在该 Bean 一被创建的时候就立马设置上我们自定义的值，就可以了。
+
+整理代码，再次运行并测试
+
+```json
+{
+    "status": "UP",
+    "components": {
+        "diskSpace": {
+            "status": "UP",
+            "details": {
+                "total": 168943423488,
+                "free": 56647806976,
+                "threshold": 10485760,
+                "exists": true
+            }
+        },
+        "ping": {
+            "status": "UP"
+        }
+    }
+}
+```
+
+成功。
+
+…
+
+---
+
 **Update-4**
+
+> 记一次 springboot-devtools 踩坑
+
 目前在拆分项目，从 pure-pltf-core 拆出 pure-pltf-base。在 base 中定义插件接口，后面自定义插件只需要依赖 base 就可以了。
 
 然后编写了一个插件样例，pure-pltf-plugin-example，引入 base 依赖，其中只有一个类
@@ -647,15 +787,21 @@ WTF？？
 
 OK 开始排查。
 
+…
 
+---
 
 **Update-3**
 
 > 手动注入一个 EnvironmentInfoContributor 读取配置文件中的自定义 info
 
+…
+
 **Update-2**
 > 第一步，先做一个全平台的信息收集接口，可以全自动收集当前已加载的应用信息，以及收集安装的应用信息。
 > 一些基础的信息可以从 Environment 类或者直接从 pom.xml 获取。
+
+…
 
 **Update-1**
 > 后端：
@@ -663,3 +809,5 @@ OK 开始排查。
 >
 > 前端：
 > 可以从前端页面选择加载并安装对应的功能
+
+…
