@@ -38,7 +38,7 @@ public class DynamicClassLoader {
     }
 
     public ClassLoader instance() {
-        return Objects.requireNonNull(innerReference.get());
+        return innerReference.get();
     }
 
     public void release() {

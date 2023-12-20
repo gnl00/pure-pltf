@@ -10,10 +10,13 @@ import java.util.ServiceLoader;
  */
 public class DynamicLoader {
 
-    public void load(ClassLoader cl) {
+    public <T> T loadOne(ClassLoader cl, Class<T> clazz) {
         Thread.currentThread().setContextClassLoader(cl);
-        // TODO do something
+        ServiceLoader<T> services = doLoad(clazz);
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+        // 强制要求所有的插件都只能有一个 Plugin 的实现类
+        // 所以只需要处理第一个 plugin
+        return services.findFirst().isPresent() ? services.findFirst().get() : null;
     }
 
     public <T> ServiceLoader<T> load(ClassLoader cl, Class<T> clazz) {
@@ -25,7 +28,6 @@ public class DynamicLoader {
 
     private <T> ServiceLoader<T> doLoad(Class<T> clazz) {
         // ServiceLoader.load 的时候会执行 Plugin 无参构造方法
-        ServiceLoader<T> services = ServiceLoader.load(clazz);
-        return services;
+        return ServiceLoader.load(clazz);
     }
 }

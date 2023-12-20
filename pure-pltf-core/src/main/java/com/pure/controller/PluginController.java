@@ -91,7 +91,7 @@ public class PluginController {
 
     @GetMapping("/uninstall")
     public String uninstall(@RequestParam String pluginName) {
-        return null;
+        return pluginHandler.uninstall(pluginName) == 1 ? "uninstall successfully" : "uninstall failed";
     }
 
 

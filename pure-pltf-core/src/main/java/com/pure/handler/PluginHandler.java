@@ -26,7 +26,7 @@ public class PluginHandler {
     private final static Map<String, WrappedPlugin> PLUGINS = new HashMap<>();
     private static DynamicLoader dynamicLoader;
 
-static {
+    static {
         dynamicLoader = new DynamicLoader();
     }
 
@@ -46,11 +46,8 @@ static {
     public int install(URL url) {
         // load plugin
         DynamicClassLoader dcl = new DynamicClassLoader(url);
-        ServiceLoader<Plugin> plugins = dynamicLoader.load(dcl.instance(), Plugin.class);
+        Plugin plugin = dynamicLoader.loadOne(dcl.instance(), Plugin.class);
 
-        // 强制要求所有的插件都只能有一个 Plugin 的实现类
-        // 所以只需要处理第一个 plugin
-        Plugin plugin = plugins.findFirst().isPresent() ? plugins.findFirst().get() : null;
         if (Objects.nonNull(plugin)) {
             // check if plugin already installed
             String plgName = plugin.getName();
@@ -99,19 +96,20 @@ static {
         }
         PLUGINS.remove(plgName);
         plg.release();
+
+        log.info("+++++ Checking ClassLoader status +++++");
+        log.info("status: {}", plg.getPluginLoader());
+        log.info("===== plugin {} uninstalled =====", plgName);
         return 1;
     }
 
     public int execute(String plgName) {
-        WrappedPlugin plg = PLUGINS.get(plgName);
-        if (Objects.isNull(plg)) {
+        Plugin plg = null;
+        WrappedPlugin wp = PLUGINS.get(plgName);
+        if (Objects.isNull(wp)  || !wp.getIsEnable() || Objects.isNull(plg = wp.getPlugin())) {
             return -1;
         }
-        ClassLoader cl = plg.getPluginLoader();
-        if (Objects.isNull(dynamicLoader)) {
-            dynamicLoader = new DynamicLoader();
-        }
-        dynamicLoader.load(cl);
+        plg.exec();
         return 1;
     }
 

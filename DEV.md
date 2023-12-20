@@ -614,6 +614,56 @@ spi implement...
 
 ## 碎碎念
 
+**Update-6**
+
+如果想要添加 Websocket 插件，
+
+SpringBoot 中如何添加？
+
+1、添加依赖
+
+2、配置暴露的 url，处理 open/close，将 Websocket 处理类加入 IOC 容器
+
+3、启动
+
+> 有点简单的。
+
+插件该如何实现这一逻辑呢？
+
+> 一、自定完成代码逻辑，由 exec 调用。
+
+不合理，需要实现的代码逻辑太多了。
+
+> 二、基于 SpringBoot
+
+如何让插件也支持 SpringBoot？
+
+如果单纯给插件引入 spring-boot-start，然后通过 exec 来执行 该插件的 SpringApplication#run？
+
+这样子的话我们的应用【Lite】 和【插件】是不共用一个 IOC 容器的。
+
+如何实现跨 IOC 的交互？
+
+IOC 是什么？本质上是一个 Map，一个 ConcurrentHashMap。
+
+或许可以利用 DevTools 的逻辑实现热部署？
+
+猜想：每当代码出现变化 DevTools 使用自定义的 DevToolsClassLoader 来加载变化的类，再合并到 IOC 容器中。
+
+说干就干，让我们先看一下 DevTools 都干了些什么。
+
+
+
+
+
+
+
+
+
+…
+
+---
+
 **Update-5**
 
 > 记一次 BeanPostProcessor 的使用
