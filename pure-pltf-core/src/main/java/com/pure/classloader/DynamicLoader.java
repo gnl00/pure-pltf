@@ -1,4 +1,4 @@
-package com.pure.loader;
+package com.pure.classloader;
 
 import java.util.ServiceLoader;
 

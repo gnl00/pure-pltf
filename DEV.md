@@ -640,21 +640,27 @@ SpringBoot 中如何添加？
 
 如果单纯给插件引入 spring-boot-start，然后通过 exec 来执行 该插件的 SpringApplication#run？
 
-这样子的话我们的应用【Lite】 和【插件】是不共用一个 IOC 容器的。
+这样子的话我们的应用【Lite】 和【插件】是*不共用一个 IOC 容器*的。
 
-如何实现跨 IOC 的交互？
+如何实现跨 IOC 的交互？或者如何只使用一个 IoC 来管理应用的整个生命周期?
 
 IOC 是什么？本质上是一个 Map，一个 ConcurrentHashMap。
 
-或许可以利用 DevTools 的逻辑实现热部署？
+或许可以利用 DevTools 的逻辑实现热部署？详情查看 [how-sb-devtools-works](https://github.com/gnl00/how-sb-devtools-works)
 
-猜想：每当代码出现变化 DevTools 使用自定义的 DevToolsClassLoader 来加载变化的类，再合并到 IOC 容器中。
+> 也就是说，后续的所有类加载都交由 RestartClassLoader 来完成了。同样的，我们感兴趣的 IoC 容器也是。
 
-说干就干，让我们先看一下 DevTools 都干了些什么。
+那么思路就有了：有样学样，我们也**使用自定义的类加载器，来接管从应用启动到后续整个生命周期中类的加载**，暂且称它为【自定义 AppClassLoader】。甚至加载插件的时候也使用这个 【自定义 AppClassLoader】来加载
 
+> 这样子的话我们就不能使用多个类加载器来加载插件了，需要使用到代理类来执行。前面的话是什么意思？详情查看 [boot-pkg](https://github.com/gnl00/boot-pkg?tab=readme-ov-file#classloader-%E4%BB%A3%E7%90%86)
 
+…
 
+> 一顿操作猛如虎之后发现…
+>
+> 是不是在 main 方法创建一个新的线程 Restart 然后 setContextClassLoader 也能达到要求？
 
+不行，从 main 方法设置的话就会被用户感知到。不优雅。
 
 
 

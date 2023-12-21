@@ -1,7 +1,7 @@
 package com.pure.plugin;
 
 import com.pure.Plugin;
-import com.pure.loader.DynamicClassLoader;
+import com.pure.classloader.DynamicClassLoader;
 import lombok.*;
 
 import java.util.Objects;

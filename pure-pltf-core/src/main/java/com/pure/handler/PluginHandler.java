@@ -1,9 +1,9 @@
 package com.pure.handler;
 
 import com.pure.Plugin;
-import com.pure.loader.DynamicClassLoader;
+import com.pure.classloader.DynamicClassLoader;
 import com.pure.plugin.WrappedPlugin;
-import com.pure.loader.DynamicLoader;
+import com.pure.classloader.DynamicLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

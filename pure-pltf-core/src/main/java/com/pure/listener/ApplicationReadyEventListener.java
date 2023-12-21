@@ -3,7 +3,7 @@ package com.pure.listener;
 import com.pure.Plugin;
 import com.pure.beans.PltfProperties;
 import com.pure.handler.PluginHandler;
-import com.pure.loader.DynamicClassLoader;
+import com.pure.classloader.DynamicClassLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
