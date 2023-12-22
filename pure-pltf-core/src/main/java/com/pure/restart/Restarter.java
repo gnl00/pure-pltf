@@ -1,5 +1,6 @@
-package com.pure.classloader;
+package com.pure.restart;
 
+import com.pure.classloader.PltfClassLoader;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 
@@ -46,16 +47,18 @@ public class Restarter {
         System.out.println("Immediately restarting application");
         try {
             start();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void start() throws InterruptedException {
-        PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{}, getClass().getClassLoader());
+    private void start() throws InterruptedException, ClassNotFoundException {
+        PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
+        pltfClassLoader.setAppName(this.args[this.args.length - 1]);
         Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
         launcher.start();
         launcher.join(); // Waits for this thread to die
+        for (;;) {} // stuck here
     }
 
     private String getMainClassName(Thread currentThread) {
@@ -101,6 +104,8 @@ public class Restarter {
         }
     }
 
+    // 在 springboot-devtools 中这个方法主要用来加载有更新的类文件或者配置文件的
+    // 其实不实现这个方法问题也不大
     public void prepare(ConfigurableApplicationContext applicationContext) {
         if (null != applicationContext && null != applicationContext.getParent()) {
             return;

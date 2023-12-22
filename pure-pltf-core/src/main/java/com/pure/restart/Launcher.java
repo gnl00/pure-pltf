@@ -1,4 +1,4 @@
-package com.pure.classloader;
+package com.pure.restart;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,7 +23,6 @@ public class Launcher extends Thread {
         try {
             ClassLoader cl = getContextClassLoader();
             System.out.println("classloader in launcher#run cl: " + cl);
-            Class<?> aClass = cl.loadClass(this.mainClassName);
             Class<?> mainClass = Class.forName(this.mainClassName, false, cl);
             Method mainMethod = mainClass.getDeclaredMethod("main", String[].class);
             mainMethod.setAccessible(true);

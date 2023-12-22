@@ -1,6 +1,6 @@
 package com.pure.listener;
 
-import com.pure.classloader.Restarter;
+import com.pure.restart.Restarter;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
 import org.springframework.boot.context.event.ApplicationPreparedEvent;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

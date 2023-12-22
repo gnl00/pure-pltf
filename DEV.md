@@ -614,6 +614,137 @@ spi implement...
 
 ## 碎碎念
 
+**Update-8**
+
+类加载器解决了。坏消息是：SpringBoot 启动两次了。
+
+```shell
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'springApplicationAdminRegistrar'
+...
+Caused by: javax.management.InstanceAlreadyExistsException: org.springframework.boot:type=Admin,name=SpringApplication
+...
+```
+
+应用已经启动了为什么还会再启动一次？
+
+因为在 Restart#start 启动的时候
+
+```java
+private void start() throws InterruptedException, ClassNotFoundException {
+  PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
+  pltfClassLoader.setAppName(this.args[this.args.length - 1]);
+  Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
+  launcher.start();
+  launcher.join(); // Waits for this thread to die
+  System.out.println("Launcher thread finished, exiting");
+}
+```
+
+launcher 线程结束了，于是之前的主线程继续
+
+> 问题不大，修改一下
+
+```java
+private void start() throws InterruptedException, ClassNotFoundException {
+  PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
+  pltfClassLoader.setAppName(this.args[this.args.length - 1]);
+  Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
+  launcher.start();
+  launcher.join(); // Waits for this thread to die
+  for (;;) {} // stuck here
+}
+```
+
+让该线程一直等待，不退出。
+
+…
+
+**Update-7**
+
+受 DevTools 启发，自定义 ClassLoader 加载启动类。
+
+```java
+PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{}, getClass().getClassLoader());
+Class<?> mainClass = Class.forName(this.mainClassName, false, pltfClassLoader);
+```
+
+这句代码看起来没什么问题…但是，表现的结果却和期望不一样。
+
+这里明确指定了使用 PltfClassLoader 来加载启动类，但是 debug 的时候却发现仍然是使用 AppClassLoader 来加载主启动类的？
+
+![image-20231222100250096](./assets/image-20231222100250096.png)
+
+…
+
+> 如果是简单的：
+>
+> ```java
+> Class<?> mainClass = Class.forName(this.mainClassName);
+> ```
+>
+> 这个流程是可以理解的，PltfClassLoader 作为 AppClassLoader 的子启动类，PltfClassLoader 在进行类加载的时候是会遵循双亲委派原则的。所以 PltfClassLoader 加载主启动类的时候会向上级类加载器寻找查看是否由加载过主启动类的类加载器，很巧就找到了 AppClassLoader，于是就利用 AppClassLoader 来加载主启动类了。
+
+但令人费解的是：这套模式是基于 DevTools 来实现的，在对 DevTools 进行 debug 的过程中可以发现
+
+![image-20231222142248133](./assets/image-20231222142248133.png)
+
+> **主启动类是由 RestartClassLoader 来加载的**。
+
+和我们的行为不一致，什么原因呢？
+
+只有一个解释：**DevTools 在进行主启动类加载的时候不遵循双亲委派机制**。
+
+> 可恶！被摆了一道！:angry:
+
+将 RestartClassLoader 中所有的重写方法都打上断点，来会一会它。跟着断点执行，我们得到下面的流程：
+
+1. RestartClassLoader 构造方法
+2. RestartClassLoader#loadClass，这一步会使用 synchronized 锁确保只创建一个新的主启动类
+3. …
+
+> 家人们，找了半天，无法重现 DevTools 破坏双亲委派机制，破防了:cry:
+
+> 另寻他路:thinking:
+
+>  好消息！:smile:
+
+经过一番重写
+
+```java
+@Override
+protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+  String path = name.replace('.', '/').concat(".class");
+  Path realPath = Paths.get(this.appName, CLASSES_FILE, path);
+  synchronized (getClassLoadingLock(name)) {
+    Class<?> loadedClass = null;
+    File classFile = new File(realPath.toString());
+    if (classFile.exists()) {
+      try (InputStream fis = new FileInputStream(classFile)) {
+        byte[] content = fis.readAllBytes();
+        loadedClass = defineClass(name, content, 0, content.length);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return loadedClass;
+    } else {
+      return super.loadClass(name, resolve);
+    }
+  }
+}
+```
+
+现在已经能顺利在第二次加载的时候使用自定义的类加载器来加载了！
+
+```shell
+ClassLoader for now: jdk.internal.loader.ClassLoaders$AppClassLoader@2b193f2d
+PltfApplicationListener init
+Immediately restarting application
+classloader in launcher#run cl: com.pure.classloader.PltfClassLoader@1169afe1
+ClassLoader for now: com.pure.classloader.PltfClassLoader@1169afe1
+```
+
+…
+
 **Update-6**
 
 如果想要添加 Websocket 插件，
@@ -661,10 +792,6 @@ IOC 是什么？本质上是一个 Map，一个 ConcurrentHashMap。
 > 是不是在 main 方法创建一个新的线程 Restart 然后 setContextClassLoader 也能达到要求？
 
 不行，从 main 方法设置的话就会被用户感知到。不优雅。
-
-
-
-
 
 …
 
