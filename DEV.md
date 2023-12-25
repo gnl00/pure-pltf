@@ -612,7 +612,41 @@ spi implement...
 
 ### 破坏双亲委派机制
 
-…
+DevTools 在二次加载主启动类的时候破坏了类加载的双亲委派机制。它使用 RestartClassLoader 重写了 loadClass 方法，
+
+```java
+@Override
+public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    String path = name.replace('.', '/').concat(".class");
+    ClassLoaderFile file = this.updatedFiles.getFile(path);
+    if (file != null && file.getKind() == Kind.DELETED) {
+        throw new ClassNotFoundException(name);
+    }
+    synchronized (getClassLoadingLock(name)) {
+        Class<?> loadedClass = findLoadedClass(name);
+        if (loadedClass == null) {
+            try {
+                loadedClass = findClass(name);
+            }
+            catch (ClassNotFoundException ex) {
+                loadedClass = Class.forName(name, false, getParent());
+            }
+        }
+        if (resolve) {
+            resolveClass(loadedClass);
+        }
+        return loadedClass;
+    }
+}
+```
+
+使用 RestartClassLoader 对 updatedFiles 中关联到的类均实现重新加载。
+
+...
+
+### DevTools 只启动一次？
+
+...
 
 ---
 
@@ -624,7 +658,35 @@ spi implement...
 
 ~~接下来测试主应用与插件的跨容器调用。~~
 
-手动的将插件注入到主应用的 IOC 容器中测试通过。但是这和想象中的跨容器不是一回事...
+手动的将插件注入到主应用的 IOC 容器中测试通过。
+
+1、registerBeanDefinition
+
+```java
+    ConfigurableApplicationContext ac = SpringApplication.run(Main.class, args);
+    BeanDefinitionBuilder bdb = BeanDefinitionBuilder.genericBeanDefinition(Cat.class);
+    bdb.addPropertyValue("name", "mycat");
+    BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) ac;
+    beanFactory.registerBeanDefinition("mycat", bdb.getBeanDefinition());
+    Cat bean = ac.getBean(Cat.class);
+    System.out.println(bean);
+```
+
+2、registerSingleton
+
+```java
+    ConfigurableApplicationContext ac = SpringApplication.run(Main.class, args);
+    Cat cat = new Cat();
+    cat.setName("my-singleton-cat");
+    ac.getBeanFactory().registerSingleton("mycat", cat);
+    System.out.println("***** GET *****");
+    Cat bean = ac.getBean(Cat.class);
+    System.out.println(bean);
+```
+
+...
+
+但是这和想象中的跨容器不是一回事...
 
 因为从始至终只存在主应用的一个 IOC 容器；而插件只是一个功能实现，并没有启动 IOC 容器，所以也就不存在跨容器。
 
