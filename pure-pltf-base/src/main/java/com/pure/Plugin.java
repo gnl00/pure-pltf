@@ -1,6 +1,7 @@
 package com.pure;
 
 import lombok.Data;
+import org.springframework.context.ApplicationContext;
 
 public abstract class Plugin implements PluginHook {
 
@@ -9,6 +10,8 @@ public abstract class Plugin implements PluginHook {
     public static final int DEFAULT_PRIORITY = MIN_PRIORITY;
 
     private final Metadata metadata;
+
+    private ApplicationContext applicationContext;
 
     public Plugin() {
         this.metadata = init();
@@ -26,6 +29,14 @@ public abstract class Plugin implements PluginHook {
 
     public String getVersion() {
         return metadata.getVersion();
+    }
+
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
     }
 
     @Data

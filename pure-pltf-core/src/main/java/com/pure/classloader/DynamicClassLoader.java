@@ -30,13 +30,6 @@ public class DynamicClassLoader {
         add(url);
     }
 
-    public void show() {
-        System.out.println(innerReference.get());
-        release();
-        System.out.println("=== after release ===");
-        System.out.println(innerReference.get());
-    }
-
     public ClassLoader instance() {
         return innerReference.get();
     }

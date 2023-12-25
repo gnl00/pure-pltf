@@ -5,6 +5,9 @@ import com.pure.classloader.DynamicClassLoader;
 import com.pure.plugin.WrappedPlugin;
 import com.pure.classloader.DynamicLoader;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -23,12 +26,19 @@ import java.util.stream.Stream;
 @Component
 public class PluginHandler {
 
+    public static final int INSTALL_SUCCESS = 1;
+    public static final int INSTALL_FAILED = -1;
+    public static final int ALREADY_EXIST = 0;
+
     private final static Map<String, WrappedPlugin> PLUGINS = new HashMap<>();
     private static DynamicLoader dynamicLoader;
 
     static {
         dynamicLoader = new DynamicLoader();
     }
+
+    @Autowired
+    private ApplicationContext ac;
 
     public Map<String, Object> listRootJars() {
         Map<String, Object> jars = new HashMap<>();
@@ -54,7 +64,13 @@ public class PluginHandler {
 
             if (PLUGINS.containsKey(plgName)) {
                 log.info("plugin {} already installed", plgName);
-                return -1;
+                return ALREADY_EXIST;
+            }
+            // add plugin to IoC
+            if (ac instanceof ConfigurableApplicationContext cac) {
+                log.info("+++++ Autowire plugin to IOC +++++");
+                plugin.setApplicationContext(ac);
+                cac.getBeanFactory().registerSingleton(plgName, plugin);
             }
 
             dcl.setPlugin(plugin);
@@ -66,9 +82,9 @@ public class PluginHandler {
 
             PLUGINS.put(plgName, wp);
             log.info("plugin installed: {}", plgName);
-            return 1;
+            return INSTALL_SUCCESS;
         }
-        return -1;
+        return INSTALL_FAILED;
     }
 
     private int installOne(URL url) {

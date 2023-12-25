@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Setter
-public class PltfClassLoader extends URLClassLoader {
+public class PltfClassLoader extends DynamicClassLoader.InnerClassLoader {
 
     private static final String CLASSES_FILE = "/target/classes/";
 
@@ -20,10 +20,6 @@ public class PltfClassLoader extends URLClassLoader {
 
     public PltfClassLoader(URL[] urls) {
         super(urls);
-    }
-
-    public PltfClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
     }
 
     @Override

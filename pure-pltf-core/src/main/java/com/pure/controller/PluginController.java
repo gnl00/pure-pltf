@@ -4,6 +4,7 @@ import com.pure.Plugin;
 import com.pure.handler.PluginHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -27,6 +28,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/plugin")
 public class PluginController {
+
+    @Autowired
+    private ApplicationContext ac;
 
     @Autowired
     private PluginHandler pluginHandler;
@@ -73,9 +77,9 @@ public class PluginController {
 
     private String install(URL url) {
         int check = 0;
-        if ((check = pluginHandler.install(url)) == -1) {
+        if ((check = pluginHandler.install(url)) == PluginHandler.ALREADY_EXIST) {
             return "plugin already exists";
-        } else if (check == 0) {
+        } else if (check == PluginHandler.INSTALL_FAILED) {
             return "plugin install failed";
         }
         return "plugin install successfully";
@@ -98,6 +102,13 @@ public class PluginController {
     @GetMapping("/execute")
     public String execute(@RequestParam String pluginName) {
         return pluginHandler.execute(pluginName) == 1 ? "execute successfully" : "execute failed";
+    }
+
+    @GetMapping("/get")
+    public void getPlugin(@RequestParam String beanName) {
+        System.out.println("+++++ get plugin bean byName +++++");
+        Plugin bean = (Plugin) ac.getBean(beanName);
+        System.out.println(bean);
     }
 
     @GetMapping("/test")
