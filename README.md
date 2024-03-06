@@ -145,3 +145,7 @@ com.example.ExamplePlugin
 
 * 手动触发（手动点击按钮）
 * 自动触发（比如应用加载完成后即启动），自动触发需要给插件预留应用级别的 Hook 函数
+
+## 更新
+
+* 目前的实现方式是造一个一个 Devtools 轮子，现在看来这个实现方式可以做一些更改：**Devtools 遇到增/删/改就会 restart，只要将 Devtools 的 restart 方式改成只要 loadJar 就 restart 即可**。
