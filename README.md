@@ -145,16 +145,3 @@ com.example.ExamplePlugin
 
 * 手动触发（手动点击按钮）
 * 自动触发（比如应用加载完成后即启动），自动触发需要给插件预留应用级别的 Hook 函数
-
-## 更新
-
-**2024-03**
-* 目前的实现方式是造一个一个 Devtools 轮子，现在看来这个实现方式可以做一些更改：**Devtools 遇到增/删/改就会 restart，只要将 Devtools 的 restart 方式改成只要 loadJar 就 restart 即可**。
-
-```java
-org.springframework.boot.devtools.restart.Restarter restarter = Restarter.getInstance();
-// adding jar
-restarter.restart(); // 很方便
-```
-
-不好的一点就是只需要这一个重启的功能但是却引入了整个 Devtools。

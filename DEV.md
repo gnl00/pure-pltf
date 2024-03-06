@@ -644,9 +644,69 @@ public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundExce
 
 ...
 
-### DevTools 只启动一次？
+### DevTools 如何只启动一次？
 
+类加载器解决了。坏消息是：SpringBoot 启动两次了。
+
+```shell
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'springApplicationAdminRegistrar'
 ...
+Caused by: javax.management.InstanceAlreadyExistsException: org.springframework.boot:type=Admin,name=SpringApplication
+...
+```
+
+应用已经启动了为什么还会再启动一次？
+
+因为在 Restart#start 启动的时候
+
+```java
+private void start() throws InterruptedException, ClassNotFoundException {
+  PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
+  pltfClassLoader.setAppName(this.args[this.args.length - 1]);
+  Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
+  launcher.start();
+  launcher.join(); // Waits for this thread to die
+  System.out.println("Launcher thread finished, exiting");
+}
+```
+
+launcher 线程结束，主线程继续执行，问题就出现在这里。
+
+> 问题不大，修改一下
+
+```java
+private void start() throws InterruptedException, ClassNotFoundException {
+  PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
+  pltfClassLoader.setAppName(this.args[this.args.length - 1]);
+  Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
+  launcher.start();
+  launcher.join(); // Wait for this thread to die
+  for (;;) {} // stay here
+}
+```
+
+让该线程一直等待，不退出。
+
+观察了一下，Devtools 实现方式是使用 do-while，关键实现在 org.springframework.boot.devtools.restart.Restarter#start 方法中
+
+```java
+protected void start(FailureHandler failureHandler) throws Exception {
+  do {
+    Throwable error = doStart();
+    if (error == null) {
+      return;
+    }
+    if (failureHandler.handle(error) == Outcome.ABORT) {
+      return;
+    }
+  }
+  while (true);
+}
+```
+
+…
+
+
 
 ---
 
@@ -655,6 +715,20 @@ public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundExce
 ## 碎碎念
 
 **Update-9**
+
+目前是模仿 Devtools 的启动方式来实现插件的热部署，这个实现方式可以做一些更改：**Devtools 遇到增/删/改就会 restart，只要将 Devtools 的 restart 方式改成只要 loadJar 就 restart 即可**。
+
+```java
+org.springframework.boot.devtools.restart.Restarter restarter = Restarter.getInstance();
+// adding jar
+restarter.restart(); // 很方便
+```
+
+不好的一点就是只需要这一个重启的功能但是却引入了整个 Devtools。
+
+
+
+**Update-8**
 
 ~~接下来测试主应用与插件的跨容器调用。~~
 
@@ -701,51 +775,6 @@ DevTools 如何实现的呢？
 2、使用 RestartClassLoader 加载
 
 3、重启应用
-
-…
-
-**Update-8**
-
-类加载器解决了。坏消息是：SpringBoot 启动两次了。
-
-```shell
-org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'springApplicationAdminRegistrar'
-...
-Caused by: javax.management.InstanceAlreadyExistsException: org.springframework.boot:type=Admin,name=SpringApplication
-...
-```
-
-应用已经启动了为什么还会再启动一次？
-
-因为在 Restart#start 启动的时候
-
-```java
-private void start() throws InterruptedException, ClassNotFoundException {
-  PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
-  pltfClassLoader.setAppName(this.args[this.args.length - 1]);
-  Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
-  launcher.start();
-  launcher.join(); // Waits for this thread to die
-  System.out.println("Launcher thread finished, exiting");
-}
-```
-
-launcher 线程结束了，于是之前的主线程继续
-
-> 问题不大，修改一下
-
-```java
-private void start() throws InterruptedException, ClassNotFoundException {
-  PltfClassLoader pltfClassLoader = new PltfClassLoader(new URL[]{});
-  pltfClassLoader.setAppName(this.args[this.args.length - 1]);
-  Launcher launcher = new Launcher(pltfClassLoader, mainClassName, args);
-  launcher.start();
-  launcher.join(); // Waits for this thread to die
-  for (;;) {} // stuck here
-}
-```
-
-让该线程一直等待，不退出。
 
 …
 
